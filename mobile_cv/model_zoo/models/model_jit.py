@@ -21,8 +21,7 @@ from mobile_cv.model_zoo.models import hub_utils, model_zoo_factory, utils
 
 def _load_pretrained_info():
     folder_name = utils.get_model_info_folder("model_jit")
-    ret = utils.load_model_info_all(folder_name)
-    return ret
+    return utils.load_model_info_all(folder_name)
 
 
 PRETRAINED_MODELS = _load_pretrained_info()
@@ -51,5 +50,4 @@ def model_jit(arch_name, pretrained=False, progress=True, **kwargs):
         pretrained (bool): Not used
         progress (bool): Not used
     """
-    model = load_jit_model(arch_name)
-    return model
+    return load_jit_model(arch_name)

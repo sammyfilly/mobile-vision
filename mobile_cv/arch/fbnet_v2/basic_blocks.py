@@ -213,9 +213,7 @@ class ChannelShuffle1d(nn.Module):
         """Channel shuffle: [N,C,D] -> [N,g,C/g,D] -> [N,C/g,g,D] -> [N,C,D]"""
         N, C, D = x.size()
         g = self.groups
-        assert C % g == 0, "Incompatible group size {} for input channel {}".format(
-            g, C
-        )
+        assert C % g == 0, f"Incompatible group size {g} for input channel {C}"
         return (
             x.view(N, g, int(C / g), D).permute(0, 2, 1, 3).contiguous().view(N, C, D)
         )
@@ -371,10 +369,7 @@ def build_relu(name=None, num_channels=None, **kwargs):
         return nn.Sigmoid()
     if name in ["hsig", "hsigmoid"]:
         return HSigmoid()
-    if name in ["gelu"]:
-        return nn.GELU()
-
-    return RELU_REGISTRY.get(name)(**kwargs)
+    return nn.GELU() if name in ["gelu"] else RELU_REGISTRY.get(name)(**kwargs)
 
 
 def build_residual_connect(
@@ -382,12 +377,13 @@ def build_residual_connect(
 ):
     if name is None or name == "none":
         return None
-    if name == "default" or name == "projection":
+    if name in ["default", "projection"]:
         assert isinstance(stride, (numbers.Number, tuple, list))
-        if isinstance(stride, (tuple, list)):
-            stride_one = all(x == 1 for x in stride)
-        else:
-            stride_one = stride == 1
+        stride_one = (
+            all(x == 1 for x in stride)
+            if isinstance(stride, (tuple, list))
+            else stride == 1
+        )
         add_f = (
             TorchAdd()
             if drop_connect_rate is None
@@ -539,13 +535,12 @@ def antialiased_conv_bn_relu(
             **kwargs,
         )
         blur = None
-    if blur is not None:
-        if apply_blur_before_conv:
-            return nn.Sequential(blur, conv_bn_relu)
-        else:
-            return nn.Sequential(conv_bn_relu, blur)
-    else:
+    if blur is None:
         return conv_bn_relu
+    if apply_blur_before_conv:
+        return nn.Sequential(blur, conv_bn_relu)
+    else:
+        return nn.Sequential(conv_bn_relu, blur)
 
 
 def _se_op_fc(in_channels, mid_channels, relu_args, sigmoid_type):
@@ -558,8 +553,7 @@ def _se_op_fc(in_channels, mid_channels, relu_args, sigmoid_type):
     )
     conv2 = nn.Linear(mid_channels, in_channels, bias=True)
     sig = build_relu(sigmoid_type)
-    ret = nn.Sequential(conv1_relu, conv2, sig)
-    return ret
+    return nn.Sequential(conv1_relu, conv2, sig)
 
 
 def _se_op_conv(in_channels, mid_channels, relu_args, sigmoid_type, conv_type="conv2d"):
@@ -577,8 +571,7 @@ def _se_op_conv(in_channels, mid_channels, relu_args, sigmoid_type, conv_type="c
         conv_type, mid_channels, in_channels, kernel_size=1, weight_init=None
     )
     sig = build_relu(sigmoid_type)
-    ret = nn.Sequential(conv1_relu, conv2, sig)
-    return ret
+    return nn.Sequential(conv1_relu, conv2, sig)
 
 
 class SEModule(nn.Module):
@@ -723,12 +716,11 @@ def build_upsample(name=None, scales=None, **kwargs):
     if all(x == 1 for x in iu.recursive_iterate(scales)):
         return None
 
-    if name == "default":
-        ret = Upsample(scale_factor=scales, **kwargs)
-    else:
-        ret = UPSAMPLE_REGISTRY.get(name)(scales, **kwargs)
-
-    return ret
+    return (
+        Upsample(scale_factor=scales, **kwargs)
+        if name == "default"
+        else UPSAMPLE_REGISTRY.get(name)(scales, **kwargs)
+    )
 
 
 def build_blur(name=None, num_channels=None, stride=None, **kwargs):
@@ -839,7 +831,7 @@ class AddWithResProj(nn.Module):
             elif down_sample == "maxpool":
                 ds = nn.MaxPool2d(stride)
             else:
-                raise KeyError("Down sampling method {} not found!".format(down_sample))
+                raise KeyError(f"Down sampling method {down_sample} not found!")
             self.proj = nn.Sequential(ds, proj_conv)
         else:
             self.proj = proj_conv

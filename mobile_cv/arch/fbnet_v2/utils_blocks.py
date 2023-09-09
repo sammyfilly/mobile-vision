@@ -25,11 +25,7 @@ class MixModule(nn.Module):
         self.weights[val] = 1.0
 
     def forward(self, x):
-        y = 0
-        for w, op in zip(self.weights, self.ops):
-            y += op(x) * w
-
-        return y
+        return sum(op(x) * w for w, op in zip(self.weights, self.ops))
 
 
 def create_mix_blocks(

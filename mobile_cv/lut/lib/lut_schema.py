@@ -141,10 +141,7 @@ class LUTBase(abc.ABC):
 
     def query(self, op_infos):
         assert isinstance(op_infos, list)
-        ret = []
-        for x in op_infos:
-            ret.append(self.query_op(x.op, x.input_shapes))
-        return ret
+        return [self.query_op(x.op, x.input_shapes) for x in op_infos]
 
     def query_total(self, op_infos):
         ops_latency = self.query(op_infos)

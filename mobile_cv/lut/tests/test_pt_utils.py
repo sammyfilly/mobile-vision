@@ -108,7 +108,7 @@ class TestPTUtils(unittest.TestCase):
 
         def _get_check_result(data):
             def _check_hook_output(m):
-                if len(list(m.children())) > 0:
+                if list(m.children()):
                     return
                 self.assertEqual(data(m, "name"), m.__class__.__name__)
 

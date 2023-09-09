@@ -20,6 +20,4 @@ def to_device(t, device_str):
     elif src.type == "cpu" and dst.type == "cuda":
         return torch.ops._caffe2.CopyCPUToGPU(t)
     else:
-        raise RuntimeError(
-            "Can't cast tensor from device {} to device {}".format(src, dst)
-        )
+        raise RuntimeError(f"Can't cast tensor from device {src} to device {dst}")

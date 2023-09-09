@@ -77,5 +77,5 @@ def _make_uneven_pad(padding_mode, size):
         "reflect": nn.ReflectionPad2d,
     }
     if padding_mode not in padding_types:
-        raise ValueError("Unknown Padding mode: [%s]" % padding_mode)
+        raise ValueError(f"Unknown Padding mode: [{padding_mode}]")
     return padding_types[padding_mode]([size, size + 1, size, size + 1])

@@ -38,4 +38,4 @@ def group_norm_replace_aten_with_caffe2(predict_net: caffe2_pb2.NetDef):
                 op.type = "GroupNorm"
                 count += 1
     if count > 1:
-        logger.info("Replaced {} ATen operator to GroupNormOp".format(count))
+        logger.info(f"Replaced {count} ATen operator to GroupNormOp")

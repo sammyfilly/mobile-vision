@@ -386,6 +386,9 @@ class TestUtilsFuseUtils(unittest.TestCase):
                     _test_fuse_conv(self, use_fx=use_fx, **test_args)
 
     def test_fuse_fx_recursively(self):
+
+
+
         class Model(torch.nn.Module):
             def __init__(self):
                 super().__init__()
@@ -393,10 +396,8 @@ class TestUtilsFuseUtils(unittest.TestCase):
 
             def forward(self, x):
                 # make the module not symbolic traceable
-                if x.sum() > 0:
-                    return self.conv(x)
-                else:
-                    return self.conv(x * 2)
+                return self.conv(x) if x.sum() > 0 else self.conv(x * 2)
+
 
         model = Model().eval()
         fused_model = fuse_utils.fuse_model_fx(model)

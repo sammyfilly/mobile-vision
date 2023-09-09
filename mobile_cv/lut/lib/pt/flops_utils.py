@@ -69,10 +69,9 @@ class FlopsEstimation(object):
 
     def get_lut_ops(self):
         assert self.is_enabled, "Call enable/set_enable and run model first"
-        ret = pt_converter.convert_all_modules(
+        return pt_converter.convert_all_modules(
             self.model, self._hook.data["input_shapes"]
         )
-        return ret
 
     def get_flops(self, unit=1e6):
         """Returns: (num_params, num_flops)"""
@@ -97,7 +96,7 @@ class FlopsEstimation(object):
 
                 ret = orig_extra_repr(module)
                 info_str = ", ".join(info_str)
-                if len(ret) > 0 and len(info_str) > 0:
+                if len(ret) > 0 and info_str != "":
                     ret = ret + ",\n"
                 ret += info_str
                 return ret
@@ -160,7 +159,7 @@ def get_unique_parent_types(type_list):
     for idx, x in enumerate(type_list):
         if issubclass(x, tuple(type_list[idx + 1 :])):
             continue
-        if len(ret) > 0 and issubclass(x, tuple(ret)):
+        if ret and issubclass(x, tuple(ret)):
             continue
         ret.append(x)
 

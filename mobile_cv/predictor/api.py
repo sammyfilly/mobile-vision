@@ -61,8 +61,7 @@ class FuncInfo(NamedTuple):
     @staticmethod
     def gen_func_info(class_obj, params):
         return FuncInfo(
-            name="{}.{}".format(class_obj.__module__, class_obj.__qualname__),
-            params=params,
+            name=f"{class_obj.__module__}.{class_obj.__qualname__}", params=params
         )
 
 
@@ -126,8 +125,7 @@ class PredictorWrapper(nn.Module):
     def forward(self, x):  # NOTE: support only single input and output
         inputs = self.preprocess(x)
         outputs = self.run_func(self.model_or_models, inputs)
-        y = self.postprocess(x, inputs, outputs)
-        return y
+        return self.postprocess(x, inputs, outputs)
 
     def get_wrapped_models(self):
         """Return the torchscript model directly
@@ -150,7 +148,7 @@ class PredictorWrapper(nn.Module):
 
 
 def create_predictor(predictor_dir):
-    logger.info("Creating predictor from structured folder: {}".format(predictor_dir))
+    logger.info(f"Creating predictor from structured folder: {predictor_dir}")
     return _create_predictor(
         info_json=os.path.join(predictor_dir, "predictor_info.json"),
         model_root=predictor_dir,

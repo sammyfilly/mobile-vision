@@ -36,15 +36,13 @@ class FrozenBatchNorm2d(nn.Module):
 def get_world_size() -> int:
     if not dist.is_available():
         return 1
-    if not dist.is_initialized():
-        return 1
-    return dist.get_world_size()
+    return 1 if not dist.is_initialized() else dist.get_world_size()
 
 
 class _AllReduce(Function):
     @staticmethod
     def forward(ctx, input):
-        input_list = [torch.zeros_like(input) for k in range(dist.get_world_size())]
+        input_list = [torch.zeros_like(input) for _ in range(dist.get_world_size())]
         # Use allgather instead of allreduce since I don't trust in-place operations ..
         dist.all_gather(input_list, input, async_op=False)
         inputs = torch.stack(input_list, dim=0)
@@ -183,10 +181,10 @@ class NaiveSyncBatchNorm1d(nn.BatchNorm1d):
             return super().forward(input)
 
         assert input.shape[0] > 0, "SyncBatchNorm does not support empty inputs"
-        assert len(input.shape) in (
+        assert len(input.shape) in {
             2,
             3,
-        ), "SyncBatchNorm1d supports (N, C, L) or (N, C) inputs"
+        }, "SyncBatchNorm1d supports (N, C, L) or (N, C) inputs"
         C = input.shape[1]
 
         reduce_dims = [*range(len(input.shape))]

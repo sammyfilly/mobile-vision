@@ -32,9 +32,7 @@ def cat(tensors, dim=0):
     element in a list
     """
     assert isinstance(tensors, (list, tuple))
-    if len(tensors) == 1:
-        return tensors[0]
-    return torch.cat(tensors, dim)
+    return tensors[0] if len(tensors) == 1 else torch.cat(tensors, dim)
 
 
 class _NewEmptyTensorOp(torch.autograd.Function):
@@ -86,8 +84,7 @@ def _get_conv_2d_output_shape(conv_args: Conv2dArgs, x: torch.Tensor) -> List[in
             conv_args.stride,
         )
     ]
-    output_shape = [x.shape[0], conv_args.out_channels] + output_shape
-    return output_shape
+    return [x.shape[0], conv_args.out_channels] + output_shape
 
 
 class Conv2dEmptyOutput(torch.nn.Module):

@@ -18,10 +18,7 @@ class TestUtilsPytorchResultCache(unittest.TestCase):
         buck2 run @mode/dev-nosan //mobile-vision/mobile_cv/mobile_cv/torch/tests:utils_pytorch_test_result_cache
         """
         path_manager = get_path_manager()
-        if comm.is_main_process():
-            cache_dir = tempfile.mkdtemp()
-        else:
-            cache_dir = None
+        cache_dir = tempfile.mkdtemp() if comm.is_main_process() else None
         cache_dir = comm.all_gather(cache_dir)[0]
 
         rc = ResultCache(

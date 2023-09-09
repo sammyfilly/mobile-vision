@@ -66,8 +66,8 @@ class UpdatableMovingAverageMaxStatObserver(MovingAverageMinMaxObserver):
 
     def _load_from_state_dict(self, state_dict, prefix, *args, **kwargs):
         """Try setting max_stat to max_val if missing"""
-        key = prefix + "max_stat"
-        backup_key = prefix + "max_val"
+        key = f"{prefix}max_stat"
+        backup_key = f"{prefix}max_val"
         if key not in state_dict and backup_key in state_dict:
             state_dict[key] = state_dict[backup_key]
         super()._load_from_state_dict(state_dict, prefix, *args, **kwargs)

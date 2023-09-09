@@ -98,7 +98,7 @@ def _test_create_self_contained_from_shape(
         sc_model_dir = os.path.join(temp_dir, "sc")
         input_args = [
             "--model",
-            model_dir + "/model.jit",
+            f"{model_dir}/model.jit",
             "--input_type",
             "shape",
             "--input_shape",
@@ -116,8 +116,7 @@ def _test_create_self_contained_from_shape(
         sc_model_dir = create_self_contained_model.main(input_args)
         out_file = os.path.join(sc_model_dir, "model.jit")
         self.assertTrue(os.path.isfile(out_file))
-        loaded_model = torch.jit.load(out_file)
-        return loaded_model
+        return torch.jit.load(out_file)
 
 
 def _test_create_self_contained_from_data(
@@ -141,7 +140,7 @@ def _test_create_self_contained_from_data(
 
         input_args = [
             "--model",
-            model_dir + "/model.jit",
+            f"{model_dir}/model.jit",
             "--input_type",
             "file",
             "--input_file",
@@ -161,8 +160,7 @@ def _test_create_self_contained_from_data(
         sc_model_dir = create_self_contained_model.main(input_args)
         out_file = os.path.join(sc_model_dir, "model.jit")
         self.assertTrue(os.path.isfile(out_file))
-        loaded_model = torch.jit.load(out_file)
-        return loaded_model
+        return torch.jit.load(out_file)
 
 
 class TestModelZooToolsCreateSelfContainedModel(unittest.TestCase):

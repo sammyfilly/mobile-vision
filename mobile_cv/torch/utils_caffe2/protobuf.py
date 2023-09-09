@@ -23,10 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_pb_arg(pb, arg_name):
-    for x in pb.arg:
-        if x.name == arg_name:
-            return x
-    return None
+    return next((x for x in pb.arg if x.name == arg_name), None)
 
 
 def get_pb_arg_valf(pb, arg_name, default_val):
@@ -67,16 +64,14 @@ def check_set_pb_arg(pb, arg_name, arg_attr, arg_value, allow_override=False):
         pb.arg.extend([arg])
     if allow_override and getattr(arg, arg_attr) != arg_value:
         logger.warning(
-            "Override argument {}: {} -> {}".format(
-                arg_name, getattr(arg, arg_attr), arg_value
-            )
+            f"Override argument {arg_name}: {getattr(arg, arg_attr)} -> {arg_value}"
         )
         setattr(arg, arg_attr, arg_value)
     else:
         assert arg is not None
         assert (
             getattr(arg, arg_attr) == arg_value
-        ), "Existing value {}, new value {}".format(getattr(arg, arg_attr), arg_value)
+        ), f"Existing value {getattr(arg, arg_attr)}, new value {arg_value}"
 
 
 def _create_const_fill_op_from_numpy(name, tensor, device_option=None):
@@ -90,14 +85,12 @@ def _create_const_fill_op_from_numpy(name, tensor, device_option=None):
 
     args_dict = {}
     if tensor.dtype == np.dtype("uint8"):
-        args_dict.update(
-            {
-                "values": [str(tensor.data)],
-                "shape": [1],
-            }
-        )
+        args_dict |= {
+            "values": [str(tensor.data)],
+            "shape": [1],
+        }
     else:
-        args_dict.update({"values": tensor, "shape": tensor.shape})
+        args_dict |= {"values": tensor, "shape": tensor.shape}
 
     if device_option is not None:
         args_dict["device_option"] = device_option
@@ -138,9 +131,10 @@ def create_const_fill_op(
     """
 
     tensor_type = type(blob)
-    assert tensor_type in [np.ndarray, workspace.Int8Tensor], (
-        'Error when creating const fill op for "{}", unsupported blob type: {}'
-    ).format(name, type(blob))
+    assert tensor_type in [
+        np.ndarray,
+        workspace.Int8Tensor,
+    ], f'Error when creating const fill op for "{name}", unsupported blob type: {type(blob)}'
 
     if tensor_type == np.ndarray:
         return _create_const_fill_op_from_numpy(name, blob, device_option)
@@ -187,10 +181,7 @@ def construct_init_net_from_params(
     for name, blob in params.items():
         if isinstance(blob, str):
             logger.warning(
-                (
-                    "Blob {} with type {} is not supported in generating init net,"
-                    " skipped.".format(name, type(blob))
-                )
+                f"Blob {name} with type {type(blob)} is not supported in generating init net, skipped."
             )
             continue
         init_net.op.extend(
@@ -235,8 +226,7 @@ def get_params_from_init_net(
 
 def _updater_raise(op, input_types, output_types):
     raise RuntimeError(
-        "Failed to apply updater for op {} given input_types {} and"
-        " output_types {}".format(op, input_types, output_types)
+        f"Failed to apply updater for op {op} given input_types {input_types} and output_types {output_types}"
     )
 
 
@@ -273,7 +263,7 @@ def _generic_status_identifier(
     def _check_and_update(key, value):
         assert value is not None
         if key in _known_status:
-            if not _known_status[key] == value:
+            if _known_status[key] != value:
                 raise RuntimeError(
                     "Confilict status for {}, existing status {}, new status {}".format(
                         key, _known_status[key], value
@@ -325,7 +315,7 @@ def infer_device_type(
 ) -> Dict[Tuple[str, int], str]:
     """Return the device type ("cpu" or "gpu"/"cuda") of each (versioned) blob"""
 
-    assert device_name_style in ["caffe2", "pytorch"]
+    assert device_name_style in {"caffe2", "pytorch"}
     _CPU_STR = "cpu"
     _GPU_STR = "gpu" if device_name_style == "caffe2" else "cuda"
 
@@ -341,9 +331,9 @@ def infer_device_type(
 
     def _other_ops_updater(op, input_types, output_types):
         non_none_types = [x for x in input_types + output_types if x is not None]
-        if len(non_none_types) > 0:
+        if non_none_types:
             the_type = non_none_types[0]
-            if not all(x == the_type for x in non_none_types):
+            if any(x != the_type for x in non_none_types):
                 _updater_raise(op, input_types, output_types)
         else:
             the_type = None

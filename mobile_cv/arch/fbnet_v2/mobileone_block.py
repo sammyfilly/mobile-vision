@@ -144,11 +144,11 @@ class MobileOneBlock(nn.Module):
         if self.deploy:
             out = self.pw_1x1(self.dw_3x3(x))
         else:
-            dw_out = self.dw_1x1(x) + sum([dw_3x3(x) for dw_3x3 in self.dw_3x3_blocks])
+            dw_out = self.dw_1x1(x) + sum(dw_3x3(x) for dw_3x3 in self.dw_3x3_blocks)
             dw_out += self.dw_skip(x) if self.dw_skip is not None else 0
             dw_out = self.relu(dw_out)
 
-            out = sum([pw_1x1(dw_out) for pw_1x1 in self.pw_1x1_blocks])
+            out = sum(pw_1x1(dw_out) for pw_1x1 in self.pw_1x1_blocks)
             out += self.pw_skip(dw_out) if self.pw_skip is not None else 0
             out = self.relu(out)
         return out

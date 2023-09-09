@@ -85,7 +85,7 @@ def rename_op_input(
 
     if from_producer:
         producer_map = get_producer_map(predict_net_ssa)
-        if not (old_name, version) in producer_map:
+        if (old_name, version) not in producer_map:
             raise NotImplementedError(
                 "Can't find producer, the input {} is probably from"
                 " init_net, this is not supported yet.".format(old_name)
@@ -180,7 +180,7 @@ def get_sub_graph_external_input_output(
     # outside of this sub-graph (including predict_net.external_output)
     all_other_inputs = sum(
         (ssa[i][0] for i in range(len(ssa)) if i not in sub_graph_op_indices),
-        [(outp, versions[outp]) for outp in predict_net.external_output],
+        ((outp, versions[outp]) for outp in predict_net.external_output),
     )
     ext_outputs = [outp for outp in all_outputs if outp in set(all_other_inputs)]
 
@@ -250,10 +250,7 @@ def _get_dependency_chain(ssa, versioned_target, versioned_source):
     sub_graph_ssa = ssa[start_op : end_op + 1]
     if len(sub_graph_ssa) > 30:
         logger.warning(
-            "Subgraph bebetween {} and {} is large (from op#{} to op#{}), it"
-            " might take non-trival time to find all paths between them.".format(
-                versioned_source, versioned_target, start_op, end_op
-            )
+            f"Subgraph bebetween {versioned_source} and {versioned_target} is large (from op#{start_op} to op#{end_op}), it might take non-trival time to find all paths between them."
         )
 
     dag = DiGraph.from_ssa(sub_graph_ssa)
@@ -359,9 +356,7 @@ def remove_reshape_for_fc(predict_net, params):
     for versioned_params in params_to_remove:
         name = versioned_params[0]
         logger.info(
-            "Remove params: {} from init_net and predict_net.external_input".format(
-                name
-            )
+            f"Remove params: {name} from init_net and predict_net.external_input"
         )
         del params[name]
         predict_net.external_input.remove(name)

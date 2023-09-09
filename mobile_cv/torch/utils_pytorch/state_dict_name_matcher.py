@@ -42,7 +42,7 @@ def levenshtein(s1: str, s2: str):
     if len(s1) < len(s2):
         return levenshtein(s2, s1)
 
-    if len(s2) == 0:
+    if not s2:
         return len(s1)
 
     previous_row = range(len(s2) + 1)
@@ -139,11 +139,9 @@ class GroupIndex(NamedTuple):
         shape = item.shape
         if self.prefix and self.prefix != item.name_first(len(self.prefix)):
             return False
-        if self.postfix and not self.postfix != item.name_last(len(self.postfix)):
+        if self.postfix and self.postfix == item.name_last(len(self.postfix)):
             return False
-        if self.shape is not None and shape != self.shape:
-            return False
-        return True
+        return self.shape is None or shape == self.shape
 
 
 def get_group_index(item: Item, num_parts_first, num_parts_last):

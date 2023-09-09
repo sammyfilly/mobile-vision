@@ -38,8 +38,7 @@ def compute_prod(alist):
 
 def compute_sum_of_prod(list_of_list):
     assert isinstance(list_of_list, list)
-    ret = sum(compute_prod(x) for x in list_of_list)
-    return ret
+    return sum(compute_prod(x) for x in list_of_list)
 
 
 class OpProperty(OpBase):
@@ -118,31 +117,27 @@ class Conv2d(OpProperty):
         return [[N, self.out_channels, oH, oW]]
 
     def get_params_shape(self):
-        ret = []
         in_channels = self.in_channels // self.groups
         if self.allow_frac:
             in_channels = self.in_channels / self.groups
-        ret.append(
+        return [
             [
                 self.out_channels,
                 in_channels,
                 self.kernel_size[0],
                 self.kernel_size[1],
             ]
-        )
-        return ret
+        ]
 
     def get_flops(self, input_shape):
         nparams = self.get_nparams()
         out_shape = self.get_output_shape(input_shape)
         oN, _, oH, oW = out_shape[0]
-        flops = nparams * oN * oH * oW
-        return flops
+        return nparams * oN * oH * oW
 
     def get_nparams(self):
         params_shape = self.get_params_shape()
-        nparams = compute_sum_of_prod(params_shape)
-        return nparams
+        return compute_sum_of_prod(params_shape)
 
     def _unify(self):
         """Unify the representation"""
@@ -191,24 +186,20 @@ class Conv1d(OpProperty):
         return [[N, self.out_channels, oL]]
 
     def get_params_shape(self):
-        ret = []
         in_channels = self.in_channels // self.groups
         if self.allow_frac:
             in_channels = self.in_channels / self.groups
-        ret.append([self.out_channels, in_channels, self.kernel_size[0]])
-        return ret
+        return [[self.out_channels, in_channels, self.kernel_size[0]]]
 
     def get_flops(self, input_shape):
         nparams = self.get_nparams()
         out_shape = self.get_output_shape(input_shape)
         oN, _, oL = out_shape[0]
-        flops = nparams * oN * oL
-        return flops
+        return nparams * oN * oL
 
     def get_nparams(self):
         params_shape = self.get_params_shape()
-        nparams = compute_sum_of_prod(params_shape)
-        return nparams
+        return compute_sum_of_prod(params_shape)
 
     def _unify(self):
         """Unify the representation"""
@@ -267,11 +258,10 @@ class Conv3d(OpProperty):
         return [[N, self.out_channels, oD, oH, oW]]
 
     def get_params_shape(self):
-        ret = []
         in_channels = self.in_channels // self.groups
         if self.allow_frac:
             in_channels = self.in_channels / self.groups
-        ret.append(
+        return [
             [
                 self.out_channels,
                 in_channels,
@@ -279,20 +269,17 @@ class Conv3d(OpProperty):
                 self.kernel_size[1],
                 self.kernel_size[2],
             ]
-        )
-        return ret
+        ]
 
     def get_flops(self, input_shape):
         nparams = self.get_nparams()
         out_shape = self.get_output_shape(input_shape)
         oN, _, oD, oH, oW = out_shape[0]
-        flops = nparams * oN * oD * oH * oW
-        return flops
+        return nparams * oN * oD * oH * oW
 
     def get_nparams(self):
         params_shape = self.get_params_shape()
-        nparams = compute_sum_of_prod(params_shape)
-        return nparams
+        return compute_sum_of_prod(params_shape)
 
     def _unify(self):
         """Unify the representation"""
@@ -349,28 +336,24 @@ class ConvTranspose2d(OpProperty):
         return [[N, self.out_channels, oH, oW]]
 
     def get_params_shape(self):
-        ret = []
-        ret.append(
+        return [
             [
                 self.in_channels,
                 self.out_channels // self.groups,
                 self.kernel_size[0],
                 self.kernel_size[1],
             ]
-        )
-        return ret
+        ]
 
     def get_flops(self, input_shape):
         nparams = self.get_nparams()
         out_shape = self.get_output_shape(input_shape)
         oN, _, oH, oW = out_shape[0]
-        flops = nparams * oN * oH * oW
-        return flops
+        return nparams * oN * oH * oW
 
     def get_nparams(self):
         params_shape = self.get_params_shape()
-        nparams = compute_sum_of_prod(params_shape)
-        return nparams
+        return compute_sum_of_prod(params_shape)
 
     def _unify(self):
         """Unify the representation"""
@@ -395,24 +378,19 @@ class Linear(OpProperty):
 
     def get_output_shape(self, input_shape):
         assert len(input_shape) == 1 and len(input_shape[0]) >= 2
-        ret = [list(input_shape[0][:-1]) + [self.out_features]]
-        return ret
+        return [list(input_shape[0][:-1]) + [self.out_features]]
 
     def get_params_shape(self):
-        ret = []
-        ret.append([self.out_features, self.in_features])
-        return ret
+        return [[self.out_features, self.in_features]]
 
     def get_flops(self, input_shape):
         nparams = self.get_nparams()
         out_shape = self.get_output_shape(input_shape)
-        flops = nparams * compute_prod(out_shape[0][:-1])
-        return flops
+        return nparams * compute_prod(out_shape[0][:-1])
 
     def get_nparams(self):
         params_shape = self.get_params_shape()
-        nparams = compute_sum_of_prod(params_shape)
-        return nparams
+        return compute_sum_of_prod(params_shape)
 
 
 class AdaptiveAvgPool2d(OpProperty):
@@ -423,13 +401,10 @@ class AdaptiveAvgPool2d(OpProperty):
     def get_output_shape(self, input_shape):
         assert len(input_shape) == 1
         N, C, H, W = input_shape[0][:]
-        ret = [(N, C) + self.output_size]
-        return ret
+        return [(N, C) + self.output_size]
 
     def get_params_shape(self):
-        ret = []
-        ret.append([0])
-        return ret
+        return [[0]]
 
     def get_flops(self, input_shape):
         if not isinstance(input_shape[0], (int, float)):
@@ -438,8 +413,7 @@ class AdaptiveAvgPool2d(OpProperty):
 
     def get_nparams(self):
         params_shape = self.get_params_shape()
-        nparams = compute_sum_of_prod(params_shape)
-        return nparams
+        return compute_sum_of_prod(params_shape)
 
 
 class MatMul(OpProperty):
@@ -503,7 +477,7 @@ class MultiheadAttention(OpProperty):
             "num_heads": num_heads,
             "kdim": kdim,
             "vdim": vdim,
-            "_qkv_same_embed_dim": (embed_dim == kdim and kdim == vdim),
+            "_qkv_same_embed_dim": embed_dim == kdim == vdim,
         }
         super().__init__(info)
 
@@ -544,7 +518,7 @@ class MultiheadAttention(OpProperty):
         assert N == ks[1] and N == vs[1]
         assert S == vs[0]
 
-        flops = N * (
+        return N * (
             L * E * E
             + S * K * E
             + S * V * E
@@ -554,5 +528,3 @@ class MultiheadAttention(OpProperty):
             # -------    ---------   ---------   ---------   ---------   ---------
             # Q_proj    K_proj      V_proj      Q * K       (QK) * V    out_proj
         )
-
-        return flops

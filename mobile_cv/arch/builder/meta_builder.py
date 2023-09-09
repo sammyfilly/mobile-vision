@@ -152,9 +152,7 @@ def parse_block_cfg(block_op, out_channels, stride=1, repeat=1, *args):
     cfg = {"out_channels": out_channels, "stride": stride}
     [hp.update_dict(cfg, x) for x in args]
 
-    ret = {"block_op": block_op, "block_cfg": cfg, "repeat": repeat}
-
-    return ret
+    return {"block_op": block_op, "block_cfg": cfg, "repeat": repeat}
 
 
 def parse_block_cfgs(block_cfgs):
@@ -218,7 +216,7 @@ def _check_is_list(obj):
 
 
 def _check_lists_equal_size(*args):
-    if len(args) == 0:
+    if not args:
         return
     [_check_is_list(x) for x in args]
     size = len(args[0])
@@ -340,8 +338,7 @@ def get_num_stages(arch_def_blocks):
     ret = 0
     for x in arch_def_blocks:
         ret = max(x["stage_idx"], ret)
-    ret = ret + 1
-    return ret
+    return ret + 1
 
 
 def get_stages_dim_out(arch_def_blocks):
@@ -576,8 +573,7 @@ class MetaBuilder(object):
         return ret
 
     def _get_divisible_width(self, width):
-        ret = hp.get_divisible_by(int(width), self.width_divisor, self.width_divisor)
-        return ret
+        return hp.get_divisible_by(int(width), self.width_divisor, self.width_divisor)
 
 
 # for backward compatbility

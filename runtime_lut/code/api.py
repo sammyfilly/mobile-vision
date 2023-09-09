@@ -48,21 +48,16 @@ def decode_dtype(caffe2_dtype):
 
 
 def get_ops_from_net(model, blobs, input_dims):
-    # Extract all operators and corresponding input shapes from a model
-    blobs = {x: blobs[x] for x in blobs if not isinstance(blobs[x], str)}
-    blobs.update({x: np.ones(input_dims[x], dtype=np.float32) for x in input_dims})
-
+    blobs = {x: blobs[x] for x in blobs if not isinstance(blobs[x], str)} | {
+        x: np.ones(input_dims[x], dtype=np.float32) for x in input_dims
+    }
     blobs_dims, blobs_dtypes = model_utils.infer_model_shape_by_ops(
         model, extra_inputs=blobs, get_dtype=True
     )
 
     blobs = {x: np.zeros(blobs_dims[x], dtype=blobs_dtypes[x]) for x in blobs_dims}
 
-    if type(model) == pb2.NetDef:
-        proto = model
-    else:
-        proto = model.Proto()
-
+    proto = model if type(model) == pb2.NetDef else model.Proto()
     model_ops = proto.op
 
     ops, input_shapes, input_dtypes = [], [], []
@@ -70,7 +65,7 @@ def get_ops_from_net(model, blobs, input_dims):
         op_type, op_inputs = op.type, op.input
 
         if op_type in ["Conv", "FC"]:
-            assert len(op_inputs) == 2 or len(op_inputs) == 3
+            assert len(op_inputs) in {2, 3}
 
         param_shape = [
             np.array(blobs[str(param_blob)]).shape for param_blob in op_inputs
@@ -108,10 +103,7 @@ class OpLut(object):
         self.ops.append(op_record)
 
     def _is_match(self, op_query, op):
-        for key in TO_MATCH:
-            if op_query.get_val(key) != op.get_val(key):
-                return False
-        return True
+        return all(op_query.get_val(key) == op.get_val(key) for key in TO_MATCH)
 
     def find_op(self, op_query):
         """
@@ -119,12 +111,8 @@ class OpLut(object):
         Args:
             op_query: a LUTSchema instance, the operator to find in the database
         """
-        records = []
-        for op in self.ops:
-            if self._is_match(op_query, op):
-                records.append(op)
-
-        if records == []:
+        records = [op for op in self.ops if self._is_match(op_query, op)]
+        if not records:
             if op_query.get_val("op_type") == "Int8Conv":
                 op_query.set_val("op_type", "Int8ConvRelu")
                 return self.find_op(op_query)
@@ -141,15 +129,13 @@ class OpLut(object):
         self.ops = []
         assert os.path.exists(dbfile)
 
-        db_file = open(dbfile, "r")
-        db = db_file.readlines()
+        with open(dbfile, "r") as db_file:
+            db = db_file.readlines()
 
-        for record in db:
-            op = LUTSchema()
-            op.load_from_json(json.loads(record))
-            self.ops.append(op)
-
-        db_file.close()
+            for record in db:
+                op = LUTSchema()
+                op.load_from_json(json.loads(record))
+                self.ops.append(op)
 
 
 class RunTimeAPI(object):
@@ -178,13 +164,10 @@ class RunTimeAPI(object):
 
         if verbose:
             print(
-                "op type {} with input {}".format(
-                    op_query.get_val("op_type"),
-                    op_query.get_val("input_shapes"),
-                )
+                f'op type {op_query.get_val("op_type")} with input {op_query.get_val("input_shapes")}'
             )
 
-            print("run_time: {}".format(run_times))
+            print(f"run_time: {run_times}")
 
         if mode == "min":
             return min(run_times)
@@ -213,7 +196,7 @@ class RunTimeAPI(object):
             device: device used for benchmarking
             wait: if not found, whether to wait for the result
         """
-        db_file = os.path.join(self.db_dir, device + "-" + "op_lut_database.json")
+        db_file = os.path.join(self.db_dir, f"{device}-op_lut_database.json")
 
         if self.current_db != db_file:
             self.current_db = db_file

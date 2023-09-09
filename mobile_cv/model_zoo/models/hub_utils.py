@@ -31,10 +31,7 @@ def download_file(url, model_dir=None, progress=True):
     try:
         os.makedirs(model_dir)
     except OSError as e:
-        if e.errno == errno.EEXIST:
-            # Directory already exists, ignore.
-            pass
-        else:
+        if e.errno != errno.EEXIST:
             # Unexpected OSError, re-raise.
             raise
 
@@ -43,7 +40,7 @@ def download_file(url, model_dir=None, progress=True):
     filename = hashlib.sha256(url.encode("utf-8")).hexdigest() + "_" + filename
     cached_file = os.path.join(model_dir, filename)
     if not os.path.exists(cached_file):
-        logger.info('Downloading: "{}" to {}\n'.format(url, cached_file))
+        logger.info(f'Downloading: "{url}" to {cached_file}\n')
         torch.hub.download_url_to_file(url, cached_file, None, progress=progress)
 
     return cached_file

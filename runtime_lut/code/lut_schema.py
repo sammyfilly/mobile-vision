@@ -45,44 +45,32 @@ class LUTSchema:
     """
 
     def __init__(self):
-        self.record = {}
-        # operator type
-        self.record["op_type"] = ""
-        # a list of argument definitions, sorted by argument names. Each argument is
-        # represented by its proto string,  containing argument name and values.
-        self.record["op_args"] = []
-        # a list of input shapes. E.g., a convolution op may have shapes like:
-        #   [[1, 3, 224, 224], [16, 3, 3, 3], [16]]
-        # which are input tensor shape, kernel shape, and bias shape
-        self.record["input_shapes"] = []
-        # a list of integers indicating input data types
-        self.record["input_dtypes"] = []
-        # runtime measurement in micro-second, percentile-0
-        self.record["runtime_us_p0"] = 0.0
-        # runtime measurement in micro-second, percentile-10
-        self.record["runtime_us_p10"] = 0.0
-        # runtime measurement in micro-second, percentile-50
-        self.record["runtime_us_p50"] = 0.0
-        # runtime measurement in micro-second, percentile-90
-        self.record["runtime_us_p90"] = 0.0
-        # runtime measurement in micro-second, percentile-100
-        self.record["runtime_us_p100"] = 0.0
-        # benchmarking device
-        self.record["device"] = ""
+        self.record = {
+            "op_type": "",
+            "op_args": [],
+            "input_shapes": [],
+            "input_dtypes": [],
+            "runtime_us_p0": 0.0,
+            "runtime_us_p10": 0.0,
+            "runtime_us_p50": 0.0,
+            "runtime_us_p90": 0.0,
+            "runtime_us_p100": 0.0,
+            "device": "",
+        }
 
     def get_val(self, key):
-        assert key in self.record, "%s not in schema" % key
+        assert key in self.record, f"{key} not in schema"
         return self.record[key]
 
     def set_val(self, key, val):
-        assert key in self.record, "%s not in schema" % key
+        assert key in self.record, f"{key} not in schema"
         self.record[key] = val
 
     def get_dict_record(self):
         return self.record
 
     def load_from_json(self, input_):
-        assert isinstance(input_, str) or isinstance(input_, dict)
+        assert isinstance(input_, (str, dict))
         if isinstance(input_, str):
             record = json.loads(input_)
         elif isinstance(input_, dict):

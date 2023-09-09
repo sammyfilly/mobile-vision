@@ -12,7 +12,7 @@ class FBNetV2ModelArch(object):
     def add(name, arch):
         assert (
             name not in FBNetV2ModelArch._MODEL_ARCH
-        ), "Arch name '{}' is already existed".format(name)
+        ), f"Arch name '{name}' is already existed"
         FBNetV2ModelArch._MODEL_ARCH[name] = arch
 
     @staticmethod

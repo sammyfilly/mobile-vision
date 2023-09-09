@@ -15,8 +15,7 @@ def _list_to_dict(model_list):
     names = [x["name"] for x in model_list]
     assert len(set(names)) == len(model_list), f"Name not unique {names}"
 
-    ret = {val["name"]: val for val in model_list}
-    return ret
+    return {val["name"]: val for val in model_list}
 
 
 def load_model_info(file_name, to_dict=True):
@@ -43,5 +42,4 @@ def get_model_info_folder(name):
     sub_folder = "model_info"
     if name is not None:
         sub_folder += f"/{name}"
-    ret = pkg_resources.resource_filename(__name__, sub_folder)
-    return ret
+    return pkg_resources.resource_filename(__name__, sub_folder)

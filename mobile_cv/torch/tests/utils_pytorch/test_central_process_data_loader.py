@@ -11,8 +11,7 @@ from mobile_cv.common.misc.oss_utils import is_oss
 
 
 def get_data_loader(num_items):
-    for item in range(num_items):
-        yield item
+    yield from range(num_items)
 
 
 def _test_func(num_items, single_process=False):

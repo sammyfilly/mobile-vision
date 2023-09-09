@@ -261,8 +261,7 @@ def _get_computed_tensor_to_list(op_name, op_cfg_name, result):
             f"{[float('%.5f' % o) for o in item.contiguous().view(-1).tolist()]})"
         )
         riter.send(item_str)
-    ret = f'("{op_name}", "{op_cfg_name}"): {_to_str(riter.value)},  # noqa'
-    return ret
+    return f'("{op_name}", "{op_cfg_name}"): {_to_str(riter.value)},  # noqa'
 
 
 def _get_expected_output_to_tensor(outputs):

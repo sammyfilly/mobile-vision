@@ -24,30 +24,27 @@ from torch.ao.quantization.stubs import DeQuantStub, QuantStub
 
 def get_backend_qconfig(backend):
     if backend == "default":
-        qconfig = torch.ao.quantization.default_qconfig
+        return torch.ao.quantization.default_qconfig
     elif backend == "qnnpack_per_channel":
-        qconfig = torch.ao.quantization.QConfig(
+        return torch.ao.quantization.QConfig(
             activation=torch.ao.quantization.HistogramObserver.with_args(
                 reduce_range=False
             ),
             weight=torch.ao.quantization.default_per_channel_weight_observer,
         )
     elif backend == "qnnpack_symmetric":
-        qconfig = torch.ao.quantization.default_symmetric_qnnpack_qconfig
+        return torch.ao.quantization.default_symmetric_qnnpack_qconfig
     else:
-        qconfig = torch.ao.quantization.get_default_qconfig(backend)
-
-    return qconfig
+        return torch.ao.quantization.get_default_qconfig(backend)
 
 
 def get_backend_config(backend: str):
-    if backend in ["qnnpack", "qnnpack_per_channel", "qnnpack_symmetric"]:
-        ret = get_qnnpack_backend_config()
-    elif backend in ["fbgemm"]:
-        ret = get_fbgemm_backend_config()
+    if backend in {"qnnpack", "qnnpack_per_channel", "qnnpack_symmetric"}:
+        return get_qnnpack_backend_config()
+    elif backend in {"fbgemm"}:
+        return get_fbgemm_backend_config()
     else:
-        ret = get_native_backend_config()
-    return ret
+        return get_native_backend_config()
 
 
 def map_backend_name(backend_config_name):
@@ -129,8 +126,7 @@ class PostQuantization(object):
         return self
 
     def convert_model(self):
-        quant_model = torch.ao.quantization.convert(self.model, inplace=True)
-        return quant_model
+        return torch.ao.quantization.convert(self.model, inplace=True)
 
 
 class PostQuantizationGraph(object):
@@ -153,10 +149,7 @@ class PostQuantizationGraph(object):
         return self
 
     def trace(self, inputs, check_inputs=None, strict=True, use_get_traceable=False):
-        if use_get_traceable:
-            model = ju.get_traceable_model(self.model)
-        else:
-            model = self.model
+        model = ju.get_traceable_model(self.model) if use_get_traceable else self.model
         self.processed_model = torch.jit.trace(
             model, inputs, check_inputs=check_inputs, strict=strict
         )
@@ -186,13 +179,12 @@ class PostQuantizationGraph(object):
     def convert_model(self):
         assert self.processed_model is not None
         assert self.calibrate_func is not None
-        ret = torch.ao.quantization.quantize_jit(
+        return torch.ao.quantization.quantize_jit(
             self.processed_model,
             {"": self.qconfig},
             self.calibrate_func,
             ["_not_needed"],
         )
-        return ret
 
 
 class PostQuantizationFX(object):
@@ -235,12 +227,11 @@ class PostQuantizationFX(object):
 
     def convert_model(self):
         assert hasattr(self, "_prepared_model"), "Call prepare() first"
-        quant_model = torch.ao.quantization.quantize_fx.convert_fx(
+        return torch.ao.quantization.quantize_fx.convert_fx(
             self._prepared_model,
             qconfig_mapping=self._prepared_qconfig_dict,
             backend_config=self.backend_cfg,
         )
-        return quant_model
 
 
 def quantize_model(
@@ -267,9 +258,7 @@ def quantize_model(
     torch.ao.quantization.prepare(model, inplace=True)
     print("Collecting stats...")
     model(*inputs)
-    quant_model = torch.ao.quantization.convert(model, inplace=False)
-
-    return quant_model
+    return torch.ao.quantization.convert(model, inplace=False)
 
 
 class QuantStubNested(nn.Module):
@@ -471,7 +460,7 @@ def _add_prefix_qconfig_dict(qconfig_dict, prefix):
             pass
         elif name == "module_name":
             for sub_items in item:
-                new_item = (prefix + "." + sub_items[0], sub_items[1])
+                new_item = f"{prefix}.{sub_items[0]}", sub_items[1]
                 ret["module_name"].append(new_item)
         else:
             print(f"Unsupported type for qconfig_dict {name}: {item}")
@@ -522,9 +511,8 @@ def get_qconfig_dict(module: torch.nn.Module, qconfig):
     """Get qconfig_dict recursively from the module, used for fx quantization
     (prepare_fx/prepare_qat_fx)
     """
-    if hasattr(module, "get_qconfig_dict"):
-        qd = module.get_qconfig_dict(qconfig)
-    else:
-        qd = get_qconfig_dict_default(module, qconfig)
-
-    return qd
+    return (
+        module.get_qconfig_dict(qconfig)
+        if hasattr(module, "get_qconfig_dict")
+        else get_qconfig_dict_default(module, qconfig)
+    )

@@ -19,8 +19,7 @@ def get_module_name(m):
 @PT_CONVERTER.register("EqualLinear")
 def convert_EqualLinear(m, input_shapes):
     op = lut_ops.Linear(m.in_features, m.out_features, m.bias is not None)
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("ModulatedConv2d")
@@ -28,8 +27,8 @@ def convert_ModulatedConv2d(m, input_shapes):
     dilation = 1
     groups = 1
     bias = None
-    output_padding = 0
     if m.upsample:
+        output_padding = 0
         op = lut_ops.ConvTranspose2d(
             m.in_channels,
             m.out_channels,
@@ -52,8 +51,7 @@ def convert_ModulatedConv2d(m, input_shapes):
             groups,
             bias,
         )
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("Conv2d")
@@ -68,8 +66,7 @@ def convert_Conv2d(m, input_shapes):
         m.groups,
         m.bias is not None,
     )
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("Conv1d")
@@ -84,8 +81,7 @@ def convert_Conv1d(m, input_shapes):
         m.groups,
         m.bias is not None,
     )
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("Conv3d")
@@ -100,8 +96,7 @@ def convert_Conv3d(m, input_shapes):
         m.groups,
         m.bias is not None,
     )
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("ConvTranspose2d")
@@ -117,29 +112,25 @@ def convert_ConvTranspose2d(m, input_shapes):
         m.bias is not None,
         m.dilation,
     )
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("Linear")
 def convert_Linear(m, input_shapes):
     op = lut_ops.Linear(m.in_features, m.out_features, m.bias is not None)
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("AdaptiveAvgPool2d")
 def convert_AdaptiveAvgPool2d(m, input_shapes):
     op = lut_ops.AdaptiveAvgPool2d(m.output_size)
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("MatMul")
 def convert_MatMul(m, input_shapes):
     op = lut_ops.MatMul()
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 @PT_CONVERTER.register("MultiheadAttention")
@@ -150,17 +141,13 @@ def convert_MultiheadAttention(m, input_shapes):
         kdim=m.kdim,
         vdim=m.vdim,
     )
-    ret = lut_schema.OpInfo(op, input_shapes)
-    return ret
+    return lut_schema.OpInfo(op, input_shapes)
 
 
 def convert_module(m: torch.nn.Module, shape):
     name = get_module_name(m)
     func = PT_CONVERTER.get(name, is_raise=False)
-    ret = None
-    if func is not None:
-        ret = func(m, shape)
-    return ret
+    return func(m, shape) if func is not None else None
 
 
 def convert_all_modules(model: torch.nn.Module, get_module_shape: typing.Callable):

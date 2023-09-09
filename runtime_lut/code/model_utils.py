@@ -45,7 +45,7 @@ def load_model_pb(net_file, init_file=None, is_run_init=True, is_create_net=True
 
     if init_file is None:
         fn, ext = os.path.splitext(net_file)
-        init_file = fn + "_init" + ext
+        init_file = f"{fn}_init{ext}"
 
     init_net = caffe2_pb2.NetDef()
     init_net.ParseFromString(open(init_file, "rb").read())
@@ -81,14 +81,14 @@ def create_fill_op(name, blob, device_option=None):
     except AttributeError:
         blob_type = type(blob)
     except Exception as e:
-        print("Error when geting blob type {}: {}\n{}".format(name, blob, e))
+        print(f"Error when geting blob type {name}: {blob}\n{e}")
         raise
 
     op_type = kTypeNameMapper[blob_type]
     args_dict = {}
 
     if blob_type == np.dtype("uint8"):
-        args_dict.update({"values": [str(blob.data)], "shape": [1]})
+        args_dict |= {"values": [str(blob.data)], "shape": [1]}
     elif blob_type == workspace.Int8Tensor:
         data_type = blob.data.dtype
         shape = blob.data.shape
@@ -101,22 +101,19 @@ def create_fill_op(name, blob, device_option=None):
 
         if data_type == np.dtype("uint8"):
             values = values.tobytes()
-        args_dict.update(
-            {
-                "values": values,
-                "shape": shape,
-                "Y_scale": scale,
-                "Y_zero_point": zero_point,
-            }
-        )
+        args_dict |= {
+            "values": values,
+            "shape": shape,
+            "Y_scale": scale,
+            "Y_zero_point": zero_point,
+        }
     else:
-        args_dict.update({"values": blob, "shape": blob.shape})
+        args_dict |= {"values": blob, "shape": blob.shape}
 
     if device_option is not None:
         args_dict["device_option"] = device_option
 
-    op = core.CreateOperator(op_type, [], [name], **args_dict)
-    return op
+    return core.CreateOperator(op_type, [], [name], **args_dict)
 
 
 def get_ws_blobs(ws=None, blob_names=None):
@@ -138,7 +135,7 @@ def _get_blob(name):
     except TypeError:
         bb = workspace.FetchInt8Blob(name)
     except Exception as e:
-        print("Get blob {} error: {}".format(name, e))
+        print(f"Get blob {name} error: {e}")
 
     return bb
 
@@ -151,9 +148,9 @@ def _get_blob_shape(blob):
         try:
             bb = blob.data.shape
         except Exception as e:
-            print("Get blob shape {} error: {}".format(blob, e))
+            print(f"Get blob shape {blob} error: {e}")
     except Exception as e:
-        print("Get blob shape {} error: {}".format(blob, e))
+        print(f"Get blob shape {blob} error: {e}")
 
     return bb
 
@@ -166,45 +163,39 @@ def _get_blob_dtype(blob):
         try:
             bb = blob.data.dtype
         except Exception as e:
-            print("Get blob dtype {} error: {}".format(blob, e))
+            print(f"Get blob dtype {blob} error: {e}")
     except Exception as e:
-        print("Get blob dtype {} error: {}".format(blob, e))
+        print(f"Get blob dtype {blob} error: {e}")
 
     return bb
 
 
 def _get_blobs(blob_names):
-    ret = [_get_blob(x) for x in blob_names]
-    return ret
+    return [_get_blob(x) for x in blob_names]
 
 
 def _shape_to_list(shape):
-    if shape is None:
-        return None
-    return list(shape)
+    return None if shape is None else list(shape)
 
 
 def get_blobs_as_dict(blob_names):
-    ret = {x: _get_blob(x) for x in blob_names}
-    return ret
+    return {x: _get_blob(x) for x in blob_names}
 
 
 def get_blobs_shapes(blobs):
-    blob_dims = {
+    return {
         x: _shape_to_list(_get_blob_shape(blobs[x]))
         for x in blobs
         if blobs[x] is not None and not isinstance(blobs[x], (str, bytes))
     }
-    return blob_dims
 
 
 def get_blobs_dtypes(blobs):
-    blob_dtypes = {
+    return {
         x: _get_blob_dtype(blobs[x])
         for x in blobs
         if blobs[x] is not None and not isinstance(blobs[x], (str, bytes))
     }
-    return blob_dtypes
 
 
 def infer_model_shape(net, param_init_net, extra_inputs):
@@ -216,7 +207,7 @@ def infer_model_shape(net, param_init_net, extra_inputs):
         try:
             workspace.RunNetOnce(net)
         except Exception as e:
-            print("Run net error {}".format(e))
+            print(f"Run net error {e}")
         blobs = {x: _get_blob(x) for x in workspace.Blobs()}
         ret = get_blobs_shapes(blobs)
         workspace.ResetWorkspace()
@@ -233,7 +224,7 @@ def feed_blobs(name, blob, device_option=None):
     try:
         workspace.RunOperatorOnce(op)
     except Exception as err:
-        print("Feed blob {} error:\n{}".format(name, err))
+        print(f"Feed blob {name} error:\n{err}")
 
 
 def run_op(idx, op, extra_inputs):
@@ -243,11 +234,11 @@ def run_op(idx, op, extra_inputs):
                 feed_blobs(x, extra_inputs[x])
     for x in op.input:
         bb = _get_blob(x)
-        assert bb is not None, "Blob {} is None".format(x)
+        assert bb is not None, f"Blob {x} is None"
     workspace.RunOperatorOnce(op)
     for x in op.output:
         bb = _get_blob(x)
-        assert bb is not None, "Blob {} is None".format(x)
+        assert bb is not None, f"Blob {x} is None"
 
 
 def rand_blob(blob, scale=0.01, zero_point=0):
@@ -260,8 +251,7 @@ def rand_blob(blob, scale=0.01, zero_point=0):
     scale = scale
     zero_point = zero_point
 
-    rand_blob = workspace.Int8Tensor(values, scale, zero_point)
-    return rand_blob
+    return workspace.Int8Tensor(values, scale, zero_point)
 
 
 def infer_model_shape_by_ops_raw(net, extra_inputs=None, skip_op_idx=None):
@@ -307,10 +297,7 @@ def infer_model_shape_by_ops(
         )
         workspace.ResetWorkspace()
 
-    if not get_dtype:
-        return ret
-    else:
-        return ret, dtype
+    return ret if not get_dtype else (ret, dtype)
 
 
 def infer_model_shape_by_ops_shape(
@@ -329,7 +316,7 @@ def infer_model_shape_by_ops_shape(
             for idx, x in enumerate(extra_input_shapes):
                 assert isinstance(
                     x, (tuple, list)
-                ), "{} in extra_input_shapes must be a list".format(x)
+                ), f"{x} in extra_input_shapes must be a list"
                 eis[ext_inputs[idx]] = x
         else:
             eis = extra_input_shapes
@@ -337,10 +324,9 @@ def infer_model_shape_by_ops_shape(
             _extra_inputs[x] = np.zeros(eis[x], dtype=np.float32)
         print("Extra inputs:")
         for x in _extra_inputs:
-            print("  {}: {}".format(x, _extra_inputs[x].shape))
+            print(f"  {x}: {_extra_inputs[x].shape}")
     return infer_model_shape_by_ops(net, param_init_net, _extra_inputs, is_run_gpu)
 
 
 def get_device_option_cpu():
-    device_option = core.DeviceOption(caffe2_pb2.CPU)
-    return device_option
+    return core.DeviceOption(caffe2_pb2.CPU)

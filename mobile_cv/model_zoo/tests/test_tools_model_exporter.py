@@ -374,14 +374,17 @@ class TestToolsModelExporter(unittest.TestCase):
                 self.assertTrue(os.path.exists(path))
 
     def test_tools_model_exporter_data_loader_generator(self):
+
+
+
         @task_factory.TASK_FACTORY.register("task_dl_gen")
         class TaskWithAnn(TaskBase):
             def get_model(self):
-                ret = TestModel()
-                return ret
+                return TestModel()
 
             def get_dataloader(self):
-                return (x for x in [[torch.Tensor(1)], [torch.Tensor(1)]])
+                return iter([[torch.Tensor(1)], [torch.Tensor(1)]])
+
 
         with tempfile.TemporaryDirectory() as output_dir:
             export_args = [

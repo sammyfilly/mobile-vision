@@ -30,15 +30,13 @@ def keep_value_generator(f):
 
 def is_seq(obj, strict=False):
     if strict:
-        return type(obj) == list or type(obj) == tuple
+        return type(obj) in [list, tuple]
     # this check is general that NamedTuple etc. will return True
     return isinstance(obj, cabc.Sequence) and not isinstance(obj, str)
 
 
 def is_map(obj, strict=False):
-    if strict:
-        return type(obj) == dict
-    return isinstance(obj, cabc.Mapping)
+    return type(obj) == dict if strict else isinstance(obj, cabc.Mapping)
 
 
 def is_container(obj, strict=False):
@@ -51,18 +49,9 @@ def _yield_obj(obj, wait_on_send: bool, yield_name: bool, name_prefix: str):
     cret = yield yield_obj
     # data sent back to `ret`, needs a yield for `send()` to pause here as
     #   both 'send()' and `for` advances the generator
-    if wait_on_send is True:
+    if wait_on_send:
         ret = cret
         yield
-    elif wait_on_send is False:
-        pass
-    else:  # for backward compatbility
-        assert wait_on_send is None
-        # cret is not None means user calls `send`, it could not distingush
-        #   the case that user sends None
-        if cret is not None:
-            ret = cret
-            yield
     return ret  # noqa
 
 

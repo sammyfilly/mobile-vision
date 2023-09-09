@@ -8,7 +8,7 @@ import copy
 def get_i8f_models(model_def):
     ret = {}
     for name, arch in model_def.items():
-        new_name = name + "_i8f"
+        new_name = f"{name}_i8f"
         new_arch = copy.deepcopy(arch)
         if "basic_args" not in new_arch:
             new_arch["basic_args"] = {}
@@ -21,7 +21,7 @@ def get_syncbn_models(model_def):
     """Use sync bn in the model"""
     ret = {}
     for name, arch in model_def.items():
-        new_name = name + "_syncbn"
+        new_name = f"{name}_syncbn"
         new_arch = copy.deepcopy(arch)
         if "basic_args" not in new_arch:
             new_arch["basic_args"] = {}

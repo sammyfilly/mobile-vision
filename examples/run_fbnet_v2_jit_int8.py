@@ -24,8 +24,7 @@ def _get_input():
         "dog.jpg",
     )
     local_filename, headers = urllib.request.urlretrieve(url, filename)
-    input_image = Image.open(local_filename)
-    return input_image
+    return Image.open(local_filename)
 
 
 def run_fbnet_v2_jit_int8():

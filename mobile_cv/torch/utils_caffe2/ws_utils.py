@@ -39,6 +39,6 @@ def fetch_any_blob(name):
     except TypeError:
         bb = workspace.FetchInt8Blob(name)
     except Exception as e:
-        logger.error("Get blob {} error: {}".format(name, e))
+        logger.error(f"Get blob {name} error: {e}")
 
     return bb

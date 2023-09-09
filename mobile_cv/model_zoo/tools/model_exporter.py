@@ -119,8 +119,7 @@ def parse_args(args_list=None):
 
     assert len(ExportFactory.keys()) > 0
 
-    ret = parser.parse_args(args_list)
-    return ret
+    return parser.parse_args(args_list)
 
 
 def _set_attrs_to_model(model, attrs):
@@ -180,10 +179,7 @@ class TraceWrapperP3(torch.nn.Module):
 
 
 def _get_model_extra_files(model):
-    if hasattr(model, "extra_files"):
-        return model.extra_files
-    else:
-        return None
+    return model.extra_files if hasattr(model, "extra_files") else None
 
 
 def _get_traced_model_with_attrs(traced_model, num_inputs, model_attrs):
@@ -249,7 +245,7 @@ def trace_and_save_torchscript(
     save_bundle_input: bool = False,
     model_extra_files: Dict = None,
 ):
-    logger.info("Tracing and saving TorchScript to {} ...".format(output_path))
+    logger.info(f"Tracing and saving TorchScript to {output_path} ...")
 
     with torch.no_grad():
         if use_get_traceable:
@@ -314,8 +310,8 @@ def export_to_torchscript(args, task, model, inputs, output_base_dir, **kwargs):
     # get model_extra_files from model if it exists
     model_extra_files = _get_model_extra_files(model)
 
-    print("fused model {}".format(fused_model))
-    torch_script_path = trace_and_save_torchscript(
+    print(f"fused model {fused_model}")
+    return trace_and_save_torchscript(
         fused_model,
         inputs,
         output_dir,
@@ -327,7 +323,6 @@ def export_to_torchscript(args, task, model, inputs, output_base_dir, **kwargs):
         save_bundle_input=args.save_bundle_input,
         model_extra_files=model_extra_files,
     )
-    return torch_script_path
 
 
 @ExportFactory.register("torchscript_int8")
@@ -342,7 +337,7 @@ def export_to_torchscript_int8(
     model_extra_files = _get_model_extra_files(ptq_model)
 
     ptq_folder = os.path.join(output_base_dir, "torchscript_int8")
-    ptq_torchscript_path = trace_and_save_torchscript(
+    return trace_and_save_torchscript(
         ptq_model,
         inputs,
         ptq_folder,
@@ -354,8 +349,6 @@ def export_to_torchscript_int8(
         save_bundle_input=args.save_bundle_input,
         model_extra_files=model_extra_files,
     )
-
-    return ptq_torchscript_path
 
 
 @ExportFactory.register("_dynamic_")
@@ -389,7 +382,7 @@ def export_to_torchscript_dynamic(
 
     print(f"Converting to {model_name}...")
     output_dir = os.path.join(output_base_dir, export_format)
-    torch_script_path = trace_and_save_torchscript(
+    return trace_and_save_torchscript(
         model,
         inputs,
         output_dir,
@@ -401,7 +394,6 @@ def export_to_torchscript_dynamic(
         save_bundle_input=args.save_bundle_input,
         model_extra_files=model_extra_files,
     )
-    return torch_script_path
 
 
 @ExportFactory.register("_executorch_")
@@ -435,7 +427,7 @@ def export_to_executorch_dynamic(
     flatbuffer = exec_prog.buffer
     output_dir = os.path.join(output_base_dir, export_format)
 
-    logger.info("Saving Executorch flatbuffer to {} ...".format(output_dir))
+    logger.info(f"Saving Executorch flatbuffer to {output_dir} ...")
     if not path_manager.isdir(output_dir):
         path_manager.mkdirs(output_dir)
 
@@ -557,8 +549,7 @@ def main_batch_mode(args):
 
 
 def _get_task_info(args):
-    ret = {"task": args.task, "task_args": args.task_args}
-    return ret
+    return {"task": args.task, "task_args": args.task_args}
 
 
 def run_with_cmdline_args(args):

@@ -114,7 +114,7 @@ class NestedModuleHook(object):
             # skip `torch.jit.ScriptModule` as it does not forward hook
             if isinstance(m, torch.jit.ScriptModule):
                 return
-            if self.leaf_only and len(list(m.children())) > 0:
+            if self.leaf_only and list(m.children()):
                 return
             self._hooks.append(
                 ModuleHook(_hook, self.life_count).register_forward_hook(m)
@@ -165,11 +165,10 @@ def _extract_shapes(data):
 
 
 def collect_op_shape(m, input, output):
-    ret = {
+    return {
         "input_shapes": _extract_shapes(input),
         "output_shapes": _extract_shapes(output),
     }
-    return ret
 
 
 def convert_to_lut_ops(model, input_shapes):

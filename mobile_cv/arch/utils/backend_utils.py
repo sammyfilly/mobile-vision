@@ -51,6 +51,4 @@ def seq_module_list_to_gpu(module: torch.nn.ModuleList) -> torch.nn.ModuleList:
     assert isinstance(module, torch.nn.ModuleList)
     seq = torch.nn.Sequential(*module)
     seq = GPUWrapper(seq)
-    # still return a ModuleList so that the interface matches
-    ret = torch.nn.ModuleList([seq])
-    return ret
+    return torch.nn.ModuleList([seq])

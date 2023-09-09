@@ -73,8 +73,8 @@ class FolderLock:
         self.fail_fast = fail_fast
 
     def __enter__(self) -> "FolderLock":
-        logger.info("Acquiring lock for " + self.folder)
-        self.handle = open(self.folder + "/lockfile", "w+")
+        logger.info(f"Acquiring lock for {self.folder}")
+        self.handle = open(f"{self.folder}/lockfile", "w+")
         operations = fcntl.LOCK_EX
         if self.fail_fast:
             operations |= fcntl.LOCK_NB
@@ -84,7 +84,7 @@ class FolderLock:
         return self
 
     def __exit__(self, *args) -> None:
-        logger.info("Releasing lock for " + self.folder)
+        logger.info(f"Releasing lock for {self.folder}")
         global _CREATED_FILES
         _CREATED_FILES = set()
         self.thread_lock.release()
@@ -170,9 +170,7 @@ class PicklableWrapper(object):
 
     def __getattr__(self, attr):
         # Ensure that the wrapped object can be used seamlessly as the previous object.
-        if attr not in ["_obj"]:
-            return getattr(self._obj, attr)
-        return getattr(self, attr)
+        return getattr(self, attr) if attr in ["_obj"] else getattr(self._obj, attr)
 
 
 class MoreMagicMock(mock.MagicMock):

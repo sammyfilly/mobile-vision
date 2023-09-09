@@ -84,8 +84,7 @@ def create_regnet_arch(block_type, depth, width, group):
     ret = {"input_size": 224, "basic_args": BASIC_ARGS, "blocks": []}
     ret["blocks"].append([["conv_k3", 32, 2, 1]])
     for d, w, g in zip(depth, width, group):
-        stage = []
-        stage.append([block_type, w, 2, 1, {"dw_group_ratio": g}, IRF_CFG])
+        stage = [[block_type, w, 2, 1, {"dw_group_ratio": g}, IRF_CFG]]
         if d > 1:
             stage.append([block_type, w, 1, d - 1, {"dw_group_ratio": g}, IRF_CFG])
         ret["blocks"].append(stage)
@@ -180,14 +179,15 @@ REGNET_X_INFOS = [
 ]
 
 
-MODEL_ARCH_REGNETX = {}
-for model_info in REGNET_X_INFOS:
-    MODEL_ARCH_REGNETX[model_info["name"]] = create_regnet_arch(  # noqa
+MODEL_ARCH_REGNETX = {
+    model_info["name"]: create_regnet_arch(  # noqa
         model_info["block_type"],
         model_info["depth"],
         model_info["width"],
         model_info["group"],
     )
+    for model_info in REGNET_X_INFOS
+}
 MODEL_ARCH.register_dict(MODEL_ARCH_REGNETX)
 
 
@@ -285,12 +285,13 @@ REGNET_Y_INFOS = [
 ]
 
 
-MODEL_ARCH_REGNETY = {}
-for model_info in REGNET_Y_INFOS:
-    MODEL_ARCH_REGNETY[model_info["name"]] = create_regnet_arch(  # noqa
+MODEL_ARCH_REGNETY = {
+    model_info["name"]: create_regnet_arch(  # noqa
         model_info["block_type"],
         model_info["depth"],
         model_info["width"],
         model_info["group"],
     )
+    for model_info in REGNET_Y_INFOS
+}
 MODEL_ARCH.register_dict(MODEL_ARCH_REGNETY)

@@ -39,8 +39,8 @@ def _update_order_status(op, inputs_order, outputs_order):
         "Int8Quantize": (["NHWC"], ["NHWC"]),
         "Int8Dequantize": (["NHWC"], ["NHWC"]),
     }
-    _inputs_order = [o for o in inputs_order]  # noqa
-    _outputs_order = [o for o in outputs_order]  # noqa
+    _inputs_order = list(inputs_order)
+    _outputs_order = list(outputs_order)
 
     if op.type in STATIC_ORDERED_OPS:
         return STATIC_ORDERED_OPS[op.type]
@@ -135,7 +135,7 @@ def static_static_analyzer(
     cur_status_map = {}
     cur_cnt = 0
     while True:
-        new_status_map = {k: v for k, v in cur_status_map.items()}
+        new_status_map = dict(cur_status_map.items())
         for i in range(len(ssa)):
             _update_status_for_op(i, new_status_map)
         for i in range(len(ssa)):
