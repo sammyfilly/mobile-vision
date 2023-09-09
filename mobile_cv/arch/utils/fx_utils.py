@@ -23,9 +23,7 @@ def is_direct_submodule_node(
     """
     if node.name in input_names:
         return False
-    if node.name.startswith(submodule_name) or node.name in output_names:
-        return True
-    return False
+    return bool(node.name.startswith(submodule_name) or node.name in output_names)
 
 
 def get_direct_submodule_nodes(
@@ -34,12 +32,13 @@ def get_direct_submodule_nodes(
     input_names: List[str],
     output_names: List[str],
 ):
-    direct_sub_nodes = [
+    return [
         x
         for x in model.graph.nodes
-        if is_direct_submodule_node(x, submodule_name, input_names, output_names)
+        if is_direct_submodule_node(
+            x, submodule_name, input_names, output_names
+        )
     ]
-    return direct_sub_nodes
 
 
 def get_reference_submodule_node(
@@ -49,9 +48,11 @@ def get_reference_submodule_node(
     ret = []
     for node in sub_nodes:
         cur_inputs = node.all_input_nodes
-        for cur_input in cur_inputs:
-            if cur_input not in sub_nodes and cur_input.name not in input_names:
-                ret.append(cur_input)
+        ret.extend(
+            cur_input
+            for cur_input in cur_inputs
+            if cur_input not in sub_nodes and cur_input.name not in input_names
+        )
     return ret
 
 
@@ -68,12 +69,11 @@ def get_submodule_nodes(
         model, submodule_name, input_names, output_names
     )
     ref_nodes = get_reference_submodule_node(direct_sub_nodes, input_names)
-    ret = [
+    return [
         x
         for x in model.graph.nodes
         if x in itertools.chain(direct_sub_nodes, ref_nodes)
     ]
-    return ret
 
 
 def get_input_nodes(nodes: List[torch.fx.Node]):
@@ -83,10 +83,8 @@ def get_input_nodes(nodes: List[torch.fx.Node]):
     ret = []
     for node in nodes:
         all_inputs = node.all_input_nodes
-        for cur_input in all_inputs:
-            if cur_input not in nodes:
-                ret.append(cur_input)
-    assert len(ret) > 0
+        ret.extend(cur_input for cur_input in all_inputs if cur_input not in nodes)
+    assert ret
     return ret
 
 
@@ -94,24 +92,19 @@ def get_output_nodes(nodes: List[torch.fx.Node]):
     """Extract the output nodes from a list of nodes
     Output nodes are the nodes that are not used by other nodes
     """
-    ret = []
     all_inputs = set()
     for node in nodes:
         cur_all_inputs = node.all_input_nodes
         all_inputs.update(set(cur_all_inputs))
 
-    for node in nodes:
-        if node not in all_inputs:
-            ret.append(node)
-
-    assert len(ret) > 0
+    ret = [node for node in nodes if node not in all_inputs]
+    assert ret
     return ret
 
 
 def get_nodes_from_name(nodes: List[torch.fx.Node], names: List[str]):
     """Get all nodes with the given names"""
-    ret = [x for x in nodes if x.name in names]
-    return ret
+    return [x for x in nodes if x.name in names]
 
 
 def create_sub_graph(
@@ -158,7 +151,7 @@ def combine_model_with_subgraph(
     # e.g., sub1.layer1.conv -> layer1.conv
     for node in sub_graph.nodes:
         if node.op in ("get_attr", "call_module") and node.target.startswith(
-            sub_name + "."
+            f"{sub_name}."
         ):
             node.target = node.target[(len(sub_name) + 1) :]
 
@@ -187,8 +180,7 @@ def create_sub_model(
     """
     sub_nodes = get_submodule_nodes(model, submodule_name, input_names, output_names)
     sub_graph = create_sub_graph(sub_nodes, input_names, output_names)
-    sub_model = combine_model_with_subgraph(model, submodule_name, sub_graph)
-    return sub_model
+    return combine_model_with_subgraph(model, submodule_name, sub_graph)
 
 
 def replace_sub_model(
@@ -245,7 +237,7 @@ def extract_submodule_as_model(
 def find_closest_input_node(node: torch.fx.Node, check_func: Callable):
     queue = [node]
     has_in_queue = {node}
-    while len(queue) > 0:
+    while queue:
         cur = queue.pop(0)
         if check_func(cur):
             return cur
@@ -271,7 +263,7 @@ def get_reference_nodes_map(nodes: List[torch.fx.Node]):
 def find_closest_output_node(node, check_func, reference_nodes_map):
     queue = [node]
     has_in_queue = {node}
-    while len(queue) > 0:
+    while queue:
         cur = queue.pop(0)
         if check_func(cur):
             return cur
@@ -284,16 +276,15 @@ def find_closest_output_node(node, check_func, reference_nodes_map):
 
 def is_quantize_op(node: torch.fx.Node):
     """Check if the node is a node to quantize the tensor"""
-    if node.op == "call_function" and node.name.startswith("quantize_per_tensor"):
-        return True
-    return False
+    return bool(
+        node.op == "call_function"
+        and node.name.startswith("quantize_per_tensor")
+    )
 
 
 def is_dequant_op(node: torch.fx.Node):
     """Check if the node is a dequantization node"""
-    if node.op == "call_method" and node.target == "dequantize":
-        return True
-    return False
+    return node.op == "call_method" and node.target == "dequantize"
 
 
 def expand_subnodes_for_quantized_module(
@@ -330,8 +321,7 @@ def expand_subnodes_for_quantized_module(
             assert pnode.op == "get_attr", pnode
             ret.append(pnode)
 
-    ret = [x for x in model.graph.nodes if x in ret]
-    return ret
+    return [x for x in model.graph.nodes if x in ret]
 
 
 def get_subnodes_for_quantized_module(model: torch.fx.GraphModule, submodule_name: str):
@@ -340,26 +330,17 @@ def get_subnodes_for_quantized_module(model: torch.fx.GraphModule, submodule_nam
     nodes
     """
     direct_sub_nodes = get_direct_submodule_nodes(model, submodule_name, [], [])
-    all_sub_nodes = expand_subnodes_for_quantized_module(model, direct_sub_nodes)
-    return all_sub_nodes
+    return expand_subnodes_for_quantized_module(model, direct_sub_nodes)
 
 
 def get_inputs_for_quantized_submodule(sub_nodes: List[torch.fx.Node]):
     """Get all the quantization ops"""
-    ret = []
-    for node in sub_nodes:
-        if is_quantize_op(node):
-            ret.append(node.all_input_nodes[0])
-    return ret
+    return [node.all_input_nodes[0] for node in sub_nodes if is_quantize_op(node)]
 
 
 def get_outputs_for_quantized_submodule(sub_nodes: List[torch.fx.Node]):
     """Get all the dequantization ops"""
-    ret = []
-    for node in sub_nodes:
-        if is_dequant_op(node):
-            ret.append(node)
-    return ret
+    return [node for node in sub_nodes if is_dequant_op(node)]
 
 
 def extract_quantized_submodule_as_model(

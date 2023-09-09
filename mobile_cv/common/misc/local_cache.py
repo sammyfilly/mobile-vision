@@ -25,10 +25,7 @@ class Timer(object):
 
     def toc(self, average=True):
         self.add(time.time() - self.start_time)
-        if average:
-            return self.average_time
-        else:
-            return self.diff
+        return self.average_time if average else self.diff
 
     def add(self, time_diff):
         self.diff = time_diff

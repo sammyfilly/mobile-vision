@@ -17,7 +17,7 @@ class EqualLR:
         self.name = name
 
     def compute_weight(self, module):
-        weight = getattr(module, self.name + "_orig")
+        weight = getattr(module, f"{self.name}_orig")
         fan_in = weight.data.size(1) * weight.data[0][0].numel()
 
         return weight * math.sqrt(2 / fan_in)
@@ -28,7 +28,7 @@ class EqualLR:
 
         weight = getattr(module, name)
         del module._parameters[name]
-        module.register_parameter(name + "_orig", nn.Parameter(weight.data))
+        module.register_parameter(f"{name}_orig", nn.Parameter(weight.data))
         module.register_forward_pre_hook(fn)
 
         return fn
@@ -91,11 +91,7 @@ class ModulatedConv2d_V1(nn.Module):
 
         # 5. add noise
         self.use_noise = use_noise
-        if use_noise:
-            self.noise_weight = nn.Parameter(torch.zeros(1))
-        else:
-            self.noise_weight = None
-
+        self.noise_weight = nn.Parameter(torch.zeros(1)) if use_noise else None
         self.mul = bb.TorchMultiply()
         self.add = bb.TorchAdd()
         self.add_scalar = bb.TorchAddScalar(self.eps)

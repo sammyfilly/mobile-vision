@@ -38,7 +38,7 @@ class SpadeNorm(nn.Module):
         zero_gamma: Optional[bool] = None,
         seg_return_type: str = "None",
     ):
-        assert seg_return_type in ["None", "input", "resized"]
+        assert seg_return_type in {"None", "input", "resized"}
 
         super().__init__()
         self.out_channels = num_channels
@@ -92,10 +92,7 @@ class SpadeNorm(nn.Module):
         if self.seg_return_type == "input":
             return (ret, seg_map)
 
-        if self.seg_return_type == "resized":
-            return (ret, resized_seg_map)
-
-        return ret
+        return (ret, resized_seg_map) if self.seg_return_type == "resized" else ret
 
 
 class TupleLeft(nn.Module):
@@ -125,33 +122,25 @@ def conv_tuple_left(in_channels, out_channels, conv_name="conv2d", **conv_args):
     conv = bb.build_conv(
         conv_name, in_channels=in_channels, out_channels=out_channels, **conv_args
     )
-    if conv is None:
-        return None
-    return TupleLeft(conv)
+    return None if conv is None else TupleLeft(conv)
 
 
 @bb.BN_REGISTRY.register()
 def bn_tuple_left(num_channels, bn_name="bn", **bn_args):
     bn = bb.build_bn(bn_name, num_channels=num_channels, **bn_args)
-    if bn is None:
-        return None
-    return TupleLeft(bn)
+    return None if bn is None else TupleLeft(bn)
 
 
 @bb.RELU_REGISTRY.register()
 def relu_tuple_left(relu_name="relu", num_channels=None, **kwargs):
     relu = bb.build_relu(relu_name, num_channels=num_channels, **kwargs)
-    if relu is None:
-        return None
-    return TupleLeft(relu)
+    return None if relu is None else TupleLeft(relu)
 
 
 @bb.UPSAMPLE_REGISTRY.register()
 def upsample_tuple_left(scales=None, upsample_name="default", **kwargs):
     upsample = bb.build_upsample(upsample_name, scales=scales, **kwargs)
-    if upsample is None:
-        return None
-    return TupleLeft(upsample)
+    return None if upsample is None else TupleLeft(upsample)
 
 
 class TupleLeft2(nn.Module):
@@ -193,9 +182,7 @@ def residual_connect_tuple_left(
         drop_connect_rate=drop_connect_rate,
         **kwargs,
     )
-    if res_conn is None:
-        return None
-    return TupleLeft2(res_conn)
+    return None if res_conn is None else TupleLeft2(res_conn)
 
 
 _TL_PRIMITIVES = {
@@ -240,7 +227,7 @@ def _get_fuser_name_convbnrelu_with_tuple_left(
             return None, None
         if not isinstance(op, TupleLeft):
             return not_match_op, None
-        return op.module, op_name + ".module"
+        return op.module, f"{op_name}.module"
 
     def _get_bn_spade():
         op_name, op = _get_op("bn")
@@ -248,7 +235,7 @@ def _get_fuser_name_convbnrelu_with_tuple_left(
             return None, None
         if not isinstance(op, SpadeNorm):
             return not_match_op, None
-        return op.bn, op_name + ".bn"
+        return op.bn, f"{op_name}.bn"
 
     SUPPORTED_FUSING_TYPES = [
         {

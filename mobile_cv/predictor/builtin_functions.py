@@ -4,8 +4,7 @@
 
 class IdentityPreprocess:
     def __call__(self, x):
-        inputs = x
-        return inputs
+        return x
 
 
 class IdentityPostprocess:

@@ -54,7 +54,7 @@ class SubPackageInitFileTestMixin(object):
             f for f in init_files if not os.path.isfile(os.path.join(root, f))
         ]
         self.assertTrue(
-            len(missing_init_files) == 0,
+            not missing_init_files,
             "Missing following __init__.py files:\n{}".format(
                 "\n".join(missing_init_files)
             ),

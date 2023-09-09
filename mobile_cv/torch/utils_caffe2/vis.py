@@ -27,7 +27,7 @@ def _modify_blob_names(ops, blob_rename_f):
 def _rename_blob(name, blob_sizes, blob_ranges):
     def _list_to_str(bsize):
         ret = ", ".join([str(x) for x in bsize])
-        ret = "[" + ret + "]"
+        ret = f"[{ret}]"
         return ret
 
     ret = name
@@ -76,8 +76,8 @@ def save_graph_base(
         elif format == ".svg":
             graph.write_svg(file_name)
         else:
-            print("Incorrect format {}".format(format))
+            print(f"Incorrect format {format}")
     except Exception as e:
-        print("Error when writing graph to image {}".format(e))
+        print(f"Error when writing graph to image {e}")
 
     return graph

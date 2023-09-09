@@ -28,7 +28,7 @@ class TestFBNetV2Archs(unittest.TestCase):
         self.assertGreater(len(arch_factory), 0)
         for name, arch in arch_factory.items():
             with self.subTest(arch=name):
-                print("Unifiying {}".format(name))
+                print(f"Unifiying {name}")
                 fbnet_builder.unify_arch_def(arch, ["blocks"])
 
     def test_selected_arches(self):
@@ -61,7 +61,7 @@ class TestFBNetV2Archs(unittest.TestCase):
 
         for name in selected_archs:
             with self.subTest(arch=name):
-                print("Testing {}".format(name))
+                print(f"Testing {name}")
                 model_arch = arch_factory.get(name)
                 _create_and_run(self, name, model_arch)
 

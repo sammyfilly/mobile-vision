@@ -9,8 +9,7 @@ def parse_args():
     parser.add_argument("--name", default=None, type=str, help="name")
     parser.add_argument("--machine_rank", default=None, type=str, help="machine_rank")
     parser.add_argument("--num_machines", default=None, type=str, help="num_machines")
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def main():

@@ -17,15 +17,11 @@ def drop_connect_batch(
         torch.rand(shape, dtype=inputs.dtype, device=inputs.device) + keep_prob
     )
     binary_tensor = torch.floor(random_tensor)
-    output = inputs / keep_prob * binary_tensor
-    # output = inputs * binary_tensor
-    return output
+    return inputs / keep_prob * binary_tensor
 
 
 def add_dropout(dropout_ratio):
-    if dropout_ratio > 0:
-        return torch.nn.Dropout(dropout_ratio)
-    return None
+    return torch.nn.Dropout(dropout_ratio) if dropout_ratio > 0 else None
 
 
 def add_drop_connect_args(mbuilder, block_cfgs, drop_rate, start_idx=0, total_idx=None):

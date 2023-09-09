@@ -50,17 +50,13 @@ def get_shared_context() -> BaseSharedContext:
 def get_world_size() -> int:
     if not dist.is_available():
         return 1
-    if not dist.is_initialized():
-        return 1
-    return dist.get_world_size()
+    return 1 if not dist.is_initialized() else dist.get_world_size()
 
 
 def get_rank() -> int:
     if not dist.is_available():
         return 0
-    if not dist.is_initialized():
-        return 0
-    return dist.get_rank()
+    return 0 if not dist.is_initialized() else dist.get_rank()
 
 
 def get_local_group() -> Optional[dist.ProcessGroup]:
@@ -230,7 +226,7 @@ def reduce_dict(input_dict, average=True):
             # only main process gets accumulated, so only divide by
             # world_size in this case
             values /= world_size
-        reduced_dict = {k: v for k, v in zip(names, values)}
+        reduced_dict = dict(zip(names, values))
     return reduced_dict
 
 

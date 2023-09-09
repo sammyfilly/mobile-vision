@@ -125,7 +125,7 @@ class FBNetFPNBuilder:
               default = 4), blocks, blocks_out_dims, combiner_path
         """
         # TODO: do we want to put "input_channels" into arch_def
-        assert isinstance(input_channels, list) and len(input_channels) > 0
+        assert isinstance(input_channels, list) and input_channels
         self.input_channels = input_channels
         self.num_resolutions = len(self.input_channels) // 2
         # pyre-fixme[16]: `FBNetFPNBuilder` has no attribute
@@ -173,19 +173,18 @@ class FBNetFPNBuilder:
                     input_chdepths.append(self.blocks_out_dims[inputC_stage])
 
             stage_combiner = stage_combiners[i]
-            if stage_combiner == "add":
-                assert (
-                    len(set(input_chdepths)) == 1
-                ), f"Trying to add features with different chls: {input_chdepths}"
-                self.stage_combiner_num_inputs[i] = len(input_chdepths)
-            else:
+            if stage_combiner != "add":
                 raise NotImplementedError
 
+            assert (
+                len(set(input_chdepths)) == 1
+            ), f"Trying to add features with different chls: {input_chdepths}"
+            self.stage_combiner_num_inputs[i] = len(input_chdepths)
         # pyre-fixme[16]: `FBNetFPNBuilder` has no attribute `output_channels`.
         self.output_channels = []
-        for i in range(self.num_resolutions):
-            self.output_channels.append(self.blocks_out_dims[i * 5 + 3])
-
+        self.output_channels.extend(
+            self.blocks_out_dims[i * 5 + 3] for i in range(self.num_resolutions)
+        )
         self.combiner_path = arch_def.get("combiner_path", "high_res")
 
         # always order the output from high res to low res
@@ -213,7 +212,7 @@ class FBNetFPNBuilder:
         #  `num_stages_per_resolution`.
         i = stage_id % self.num_stages_per_resolution
         j = stage_id // self.num_stages_per_resolution
-        if i == 0 or i == 1:
+        if i in [0, 1]:
             return (j * 2 + i, None, None)
         elif i == 2 and j == 0:
             return (
@@ -227,7 +226,7 @@ class FBNetFPNBuilder:
                 self.num_stages_per_resolution * j + 1,
                 self.num_stages_per_resolution * j - 1,
             )
-        elif i == 3 or i == 4:
+        elif i in [3, 4]:
             return (self.num_stages_per_resolution * j + 2, None, None)
         else:
             raise ValueError
@@ -267,7 +266,7 @@ class FBNetFPNBuilder:
             i = k % self.num_stages_per_resolution
             j = k // self.num_stages_per_resolution
 
-            if i == 0 or i == 1:
+            if i in [0, 1]:
                 dim_in = self.input_channels[j * 2 + i]
             else:
                 dims_in = self.get_prev_stages_output_dims(k)
@@ -379,18 +378,18 @@ class FBNetFPN(nn.Module):
 
         for j in range(self.num_resolutions):
             for i in range(self.num_stages_per_resolution):
-                if i == 0 or i == 1:
+                if i in [0, 1]:
                     data[j][i] = self.stages[j][i](x[j * 2 + i])
                 elif i == 2:
                     a, b, c = data[j][0], data[j][1], data[j - 1][-1]
                     inputs = [t for t in [a, b, c] if t is not None]
                     combined_result = self.stage_combiners[j](inputs)
                     data[j][i] = self.stages[j][i](combined_result)
-                elif i == 3 or i == 4:
+                elif i in [3, 4]:
                     if self.stages[j][i] is not None:
                         data[j][i] = self.stages[j][i](data[j][2])
-                # if data[j][i] is not None:
-                #     print("res", j, "stage", i, "shape", data[j][i].shape)
+                        # if data[j][i] is not None:
+                        #     print("res", j, "stage", i, "shape", data[j][i].shape)
         output = [data[j][-2] for j in range(self.num_resolutions)]
         if self.combiner_path == "low_res":
             output = output[::-1]

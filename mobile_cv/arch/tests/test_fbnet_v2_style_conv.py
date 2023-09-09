@@ -10,10 +10,7 @@ import torch.nn as nn
 
 
 def _has_module(model, module_type):
-    for x in model.modules():
-        if isinstance(x, module_type):
-            return True
-    return False
+    return any(isinstance(x, module_type) for x in model.modules())
 
 
 class TestStyleConv(unittest.TestCase):

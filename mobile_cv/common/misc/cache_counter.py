@@ -34,13 +34,12 @@ class CacheStat(Enum):
 
     @classmethod
     def get_stat_str(cls, counter):
-        ret = (
+        return (
             f"Hit rate {cls.cache_hit_rate(counter):.2f} "
             + f"({cls.read_cached(counter)} / {cls.read_total(counter)}), "
             + f"not cachable rate {cls.read_not_cachable(counter) / cls.read_total(counter):.2f} "
             + f"({cls.read_not_cachable(counter)} / {cls.read_total(counter)})."
         )
-        return ret
 
 
 class DownloadStat(Enum):
@@ -55,11 +54,10 @@ class DownloadStat(Enum):
 
     @classmethod
     def get_stat_str(cls, counter):
-        ret = (
+        return (
             f"Download failure rate {cls.failure_rate(counter):.2f} "
             + f"({counter[cls.FAILED]} / {counter[cls.TOTAL]})."
         )
-        return ret
 
 
 class CacheCounter(object):
@@ -96,14 +94,10 @@ class CacheCounter(object):
         return False
 
     def _check_int_freq(self):
-        if self.counter[self.cache_stat.TOTAL] % self.log_freq == 0:
-            return True
-        return False
+        return self.counter[self.cache_stat.TOTAL] % self.log_freq == 0
 
     def log_stat(self):
         if self.log_func is None:
             return
-        prefix = ""
-        if self.name is not None:
-            prefix = f"{self.name}: "
+        prefix = f"{self.name}: " if self.name is not None else ""
         self.log_func(prefix + self.cache_stat.get_stat_str(self.counter))

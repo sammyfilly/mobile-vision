@@ -80,22 +80,17 @@ class Registry(Generic[VT]):
         """
         if name in self._obj_map and not self._allow_override:
             orig_obj = self._obj_map[name]
-            # allow replacing lazy object with actual object
-            if isinstance(orig_obj, LazyRegisterable) and not isinstance(
+            if not isinstance(orig_obj, LazyRegisterable) or isinstance(
                 obj, LazyRegisterable
             ):
-                msg = f"orig obj ({orig_obj}) doesn't match the new obj ({obj})"
-                if isinstance(obj, CLASS_OR_FUNCTION_TYPES):
-                    assert orig_obj.module == obj.__module__, msg
-                    if orig_obj.name is not None:
-                        assert orig_obj.name == obj.__name__, msg
-            else:
                 raise ValueError(
-                    "An object named '{}' was already registered in '{}' registry!"
-                    " Existing object ({}) vs new object ({})".format(
-                        name, self._name, orig_obj, obj
-                    )
+                    f"An object named '{name}' was already registered in '{self._name}' registry! Existing object ({orig_obj}) vs new object ({obj})"
                 )
+            msg = f"orig obj ({orig_obj}) doesn't match the new obj ({obj})"
+            if isinstance(obj, CLASS_OR_FUNCTION_TYPES):
+                assert orig_obj.module == obj.__module__, msg
+                if orig_obj.name is not None:
+                    assert orig_obj.name == obj.__name__, msg
         self._obj_map[name] = obj
 
     def _register(
@@ -154,9 +149,7 @@ class Registry(Generic[VT]):
 
         if ret is None and is_raise:
             raise KeyError(
-                "No object named '{}' found in '{}' registry! Available names: {}".format(
-                    name, self._name, list(self._obj_map.keys())
-                )
+                f"No object named '{name}' found in '{self._name}' registry! Available names: {list(self._obj_map.keys())}"
             )
 
         # resolve lazy registration by dynamic importing the object, note that if the
@@ -201,6 +194,6 @@ class Registry(Generic[VT]):
         table = tabulate(
             self._obj_map.items(), headers=table_headers, tablefmt="fancy_grid"
         )
-        return "Registry of {}:\n".format(self._name) + table
+        return f"Registry of {self._name}:\n{table}"
 
     __str__ = __repr__

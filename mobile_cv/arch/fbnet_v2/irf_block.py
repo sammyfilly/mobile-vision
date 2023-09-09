@@ -186,8 +186,7 @@ class IRFBlock(nn.Module):
         Override this method in subclass to change behavior of expansion and mid channels
         """
         mid_channels_base = out_channels if mid_expand_out else in_channels
-        mid_channels = hp.get_divisible_by(mid_channels_base * expansion, width_divisor)
-        return mid_channels
+        return hp.get_divisible_by(mid_channels_base * expansion, width_divisor)
 
     @staticmethod
     def _calc_dw_groups(mid_channels, dw_group_ratio):

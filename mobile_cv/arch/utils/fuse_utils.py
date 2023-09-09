@@ -226,9 +226,7 @@ def _get_fuser_name_cbr(
             ret.append(op_name_real)
 
     # do not need to fuse if there is only one op
-    if len(ret) <= 1:
-        return []
-    return [ret]
+    return [] if len(ret) <= 1 else [ret]
 
 
 def fuse_convbnrelu(module, is_qat, inplace=False):
@@ -255,19 +253,17 @@ def fuse_convbnrelu(module, is_qat, inplace=False):
 
 def fuse_model_inplace(model: nn.Module, is_qat: bool):
     model = fuse_convbnrelu(model, is_qat=is_qat, inplace=True)
-    children = {}
-    for name, child in model.named_children():
-        children[name] = fuse_model_inplace(child, is_qat=is_qat)
+    children = {
+        name: fuse_model_inplace(child, is_qat=is_qat)
+        for name, child in model.named_children()
+    }
     return model
 
 
 def _fuse_model(model: nn.Module, is_qat, inplace=False, use_fx=False):
     if use_fx:
         assert inplace is False
-        if is_qat:
-            return fuse_model_qat_fx(model)
-        else:
-            return fuse_model_fx(model)
+        return fuse_model_qat_fx(model) if is_qat else fuse_model_fx(model)
     if not inplace:
         model = copy.deepcopy(model)
     swap_modules_inplace(model)
@@ -283,18 +279,13 @@ def fuse_model_qat(model: nn.Module, inplace=False, use_fx=False):
 
 
 def check_bn_exist(model):
-    for x in model.modules():
-        if isinstance(x, nn.BatchNorm2d.__base__):
-            return True
-    return False
+    return any(isinstance(x, nn.BatchNorm2d.__base__) for x in model.modules())
 
 
 def count_bn_exist(model):
-    ret = 0
-    for x in model.modules():
-        if isinstance(x, nn.BatchNorm2d.__base__):
-            ret += 1
-    return ret
+    return sum(
+        1 for x in model.modules() if isinstance(x, nn.BatchNorm2d.__base__)
+    )
 
 
 def _find_input_nodes(cur_node, nodes_to_remove):

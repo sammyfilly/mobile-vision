@@ -47,16 +47,15 @@ def parse_args():
         default="SM-G950U-7.0-24",
         help="SM-G950U-7.0-24: S8 US",
     )
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def load_pb(model_path):
     # Load a caffe2 pb model and generate blobs
     model_path = os.path.join(model_path, "model.pb")
     model_init_path = (
-        (model_path + "/model_init.pb")
-        if os.path.exists(model_path + "/model_init.pb")
+        f"{model_path}/model_init.pb"
+        if os.path.exists(f"{model_path}/model_init.pb")
         else None
     )
 
@@ -84,8 +83,8 @@ def main():
             verbose=True,
         )
 
-        print("All operators found in the table? {}".format(all_found))
-        print("The network run-time latency is {}".format(net_time))
+        print(f"All operators found in the table? {all_found}")
+        print(f"The network run-time latency is {net_time}")
 
 
 if __name__ == "__main__":

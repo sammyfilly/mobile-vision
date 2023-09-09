@@ -11,17 +11,15 @@ TEST_CUDA = torch.cuda.is_available()
 
 
 def _create_op_irf(in_channels, out_channels, op_args):
-    op = irf_block.IRFBlock(
+    return irf_block.IRFBlock(
         in_channels=in_channels, out_channels=out_channels, **op_args
     )
-    return op
 
 
 def _create_op_ir_pool(in_channels, out_channels, op_args):
-    op = irf_block.IRPoolBlock(
+    return irf_block.IRPoolBlock(
         in_channels=in_channels, out_channels=out_channels, **op_args
     )
-    return op
 
 
 def create_test_irf(

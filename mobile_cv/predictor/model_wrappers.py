@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def load_model(model_path, model_type) -> nn.Module:
-    logger.info("Loading {} model from {} ...".format(model_path, model_type))
+    logger.info(f"Loading {model_path} model from {model_type} ...")
 
     if model_type.startswith("torchscript"):
         extra_files = {}
@@ -62,12 +62,12 @@ class Caffe2Wrapper(nn.Module):
     _ids = count(0)
 
     def __init__(self, predict_net, init_net):
-        logger.info("Initializing Caffe2Wrapper for: {} ...".format(predict_net.name))
+        logger.info(f"Initializing Caffe2Wrapper for: {predict_net.name} ...")
         super().__init__()
         assert isinstance(predict_net, caffe2_pb2.NetDef)
         assert isinstance(init_net, caffe2_pb2.NetDef)
         # create unique temporary workspace for each instance of Caffe2Wrapper
-        self.ws_name = "__tmp_Caffe2Wrapper_{}__".format(next(self._ids))
+        self.ws_name = f"__tmp_Caffe2Wrapper_{next(self._ids)}__"
         self.net = core.Net(predict_net)
 
         logger.info("Running init_net once to fill the parameters ...")
@@ -107,9 +107,7 @@ class Caffe2Wrapper(nn.Module):
     def forward(self, inputs):
         assert len(inputs) == len(
             self._input_blobs
-        ), "Number of input tensors ({}) doesn't match the required input blobs: {}".format(
-            len(inputs), self._input_blobs
-        )
+        ), f"Number of input tensors ({len(inputs)}) doesn't match the required input blobs: {self._input_blobs}"
         with ScopedWS(self.ws_name, is_reset=False, is_cleanup=False) as ws:
             # Feed inputs
             for b, tensor in zip(self._input_blobs, inputs):
@@ -119,9 +117,9 @@ class Caffe2Wrapper(nn.Module):
             try:
                 ws.RunNet(self.net.Proto().name)
             except RuntimeError as e:
-                if not str(e) in self._error_msgs:
+                if str(e) not in self._error_msgs:
                     self._error_msgs.add(str(e))
-                    logger.warning("Encountered new RuntimeError: \n{}".format(str(e)))
+                    logger.warning(f"Encountered new RuntimeError: \n{str(e)}")
                 logger.warning("Catch the error and use partial results.")
 
             c2_outputs = [ws.FetchBlob(b) for b in self.net.Proto().external_output]
@@ -147,9 +145,7 @@ class Caffe2Wrapper(nn.Module):
             self.net.Proto().external_output, c2_outputs, output_devices
         ):
             if not isinstance(c2_output, np.ndarray):
-                raise RuntimeError(
-                    "Invalid output for blob {}, received: {}".format(name, c2_output)
-                )
+                raise RuntimeError(f"Invalid output for blob {name}, received: {c2_output}")
             outputs.append(torch.Tensor(c2_output).to(device=device))
 
         return tuple(outputs)

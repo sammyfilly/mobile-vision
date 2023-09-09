@@ -63,13 +63,13 @@ def share_numpy_array_locally(
         new_data[:] = data[:]
         shared_data_info = (data.shape, data.dtype, shm.name, master_rank_pid)
         # maybe release the memory held by the original data?
-    else:
-        if data is not None:
-            raise ValueError(
-                f"Data must be None for non local master rank (rank: {comm.get_rank()}"
-            )
+    elif data is None:
         shared_data_info = None
 
+    else:
+        raise ValueError(
+            f"Data must be None for non local master rank (rank: {comm.get_rank()}"
+        )
     # broadcast the shared memory name
     shared_data_info_list = comm.all_gather(shared_data_info)
     local_master_rank = (
@@ -79,7 +79,7 @@ def share_numpy_array_locally(
     assert shared_data_info is not None
 
     # create new data from shared memory
-    if not comm.get_local_rank() == 0:
+    if comm.get_local_rank() != 0:
         shape, dtype, name, master_rank_pid = shared_data_info
         shm = shared_memory.SharedMemory(name=name)
         logger.info(f"Attaching to the existing shared memory ({shm}) ...")

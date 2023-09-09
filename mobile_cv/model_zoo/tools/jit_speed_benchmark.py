@@ -38,8 +38,7 @@ def parse_args(input_args):
     parser.add_argument("--int8_backend", type=str, default=None)
     parser.add_argument("--flush_denormal", action="store_true", default=False)
     parser.add_argument("--on_gpu", action="store_true", default=False)
-    args = parser.parse_args(input_args)
-    return args
+    return parser.parse_args(input_args)
 
 
 def parse_input_dims(args):
@@ -81,8 +80,7 @@ def parse_input_file(args):
     if args.input_file is None:
         return None
 
-    ret = torch.load(args.input_file, map_location="cpu")
-    return ret
+    return torch.load(args.input_file, map_location="cpu")
 
 
 def parse_inputs(args):
@@ -127,10 +125,7 @@ class Timer(object):
         self.calls += 1
         self.total_time += self.diff
         self.average_time = self.total_time / self.calls
-        if average:
-            return self.average_time
-        else:
-            return self.diff
+        return self.average_time if average else self.diff
 
 
 def maybe_run_autograd_profile(args, run_model):

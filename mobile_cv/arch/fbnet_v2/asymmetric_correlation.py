@@ -103,27 +103,25 @@ class NaiveAsymmetricCorrelationBlock(nn.Module):
             _d = 0
             for _dh in range(-dh_neg, dh_pos + 1, s2):
                 for _dw in range(-dw_neg, dw_pos + 1, s2):
-                    _outh = 0
-                    for _h in range(0, h, s1):
-                        _outw = 0
-                        for _w in range(0, w, s1):
+                    for _outh, _h in enumerate(range(0, h, s1)):
+                        for _outw, _w in enumerate(range(0, w, s1)):
                             # implicit zero padding by checking if we are computing
                             # correlation of point outside of bounds and returning 0
-                            if (
-                                _h + _dh < 0
-                                or _h + _dh >= h
-                                or _w + _dw < 0
-                                or _w + _dw >= w
-                            ):
-                                corr[_n, _d, _outh, _outw] = 0.0
-                            else:
-                                corr[_n, _d, _outh, _outw] = self.div.mul_scalar(
+                            corr[_n, _d, _outh, _outw] = (
+                                0.0
+                                if (
+                                    _h + _dh < 0
+                                    or _h + _dh >= h
+                                    or _w + _dw < 0
+                                    or _w + _dw >= w
+                                )
+                                else self.div.mul_scalar(
                                     torch.dot(
-                                        x1[_n, :, _h, _w], x2[_n, :, _h + _dh, _w + _dw]
+                                        x1[_n, :, _h, _w],
+                                        x2[_n, :, _h + _dh, _w + _dw],
                                     ),
                                     float(1.0 / c),
                                 )
-                            _outw += 1
-                        _outh += 1
+                            )
                     _d += 1
         return corr

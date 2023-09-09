@@ -49,7 +49,7 @@ class TestIterUtils(unittest.TestCase):
 
         iters = iu.recursive_iterate(values)
         for x in iters:
-            iters.send(x + "_ret" if isinstance(x, str) else x + 1)
+            iters.send(f"{x}_ret" if isinstance(x, str) else x + 1)
         result = iters.value
         self.assertEqual(result, gt_values)
 
@@ -73,7 +73,7 @@ class TestIterUtils(unittest.TestCase):
 
         iters = iu.recursive_iterate(values, wait_on_send=True)
         for x in iters:
-            iters.send(x + "_ret" if isinstance(x, str) else None)
+            iters.send(f"{x}_ret" if isinstance(x, str) else None)
         result = iters.value
         self.assertEqual(result, gt_values)
 
@@ -88,7 +88,11 @@ class TestIterUtils(unittest.TestCase):
         iters = iu.recursive_iterate(values, wait_on_send=True, yield_name=True)
         for name, x in iters:
             iters.send(
-                x + "_ret" if isinstance(x, str) else (x + 2 if name == "k3" else x + 1)
+                f"{x}_ret"
+                if isinstance(x, str)
+                else x + 2
+                if name == "k3"
+                else x + 1
             )
         result = iters.value
         self.assertEqual(result, gt_values)
@@ -185,12 +189,10 @@ class TestIterUtils(unittest.TestCase):
                 if item == data:
                     # for the last item (the full object), replace the sent object
                     riter.send(sent_item)
+                elif iu.is_map(sent_item):
+                    riter.send(tuple(list(sent_item.items())[0]))
                 else:
-                    # replace the container with its first item
-                    if iu.is_map(sent_item):
-                        riter.send(tuple(list(sent_item.items())[0]))
-                    else:
-                        riter.send(sent_item[0])
+                    riter.send(sent_item[0])
             else:
                 riter.send(item)
         self.assertEqual(
@@ -261,19 +263,25 @@ class TestIterUtils(unittest.TestCase):
         """Convert a specific types of objects to a list and reconstruct the list
         to the original structure"""
 
+
+
         @dataclass
         class Type1(object):
             name: str
 
             def process(self, _):
-                return self.name + "_t1"
+                return f"{self.name}_t1"
+
+
+
 
         @dataclass
         class Type2(object):
             name: str
 
             def process(self, _):
-                return self.name + "_t2"
+                return f"{self.name}_t2"
+
 
         @dataclass
         class TypeChoice(object):

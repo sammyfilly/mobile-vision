@@ -23,8 +23,7 @@ def _get_path(uid: str, name: str, create_path: bool = True):
     out_dir = os.path.join(_DEFAULT_PATH, uid)
     if create_path and not path_manager.exists(out_dir):
         path_manager.mkdirs(out_dir)
-    out_path = os.path.join(out_dir, f"{name}.pth")
-    return out_path
+    return os.path.join(out_dir, f"{name}.pth")
 
 
 def save_data(uid: str, name: str, data: Any):
@@ -56,11 +55,11 @@ def list_all_names(uid: str):
 
 
 def load_all_data(uid: str, load_on_cpu: bool = False):
-    ret = {}
     all_names = list_all_names(uid)
-    for name in all_names:
-        ret[name] = load_data(uid, name, load_on_cpu=load_on_cpu)
-    return ret
+    return {
+        name: load_data(uid, name, load_on_cpu=load_on_cpu)
+        for name in all_names
+    }
 
 
 def compare_data(

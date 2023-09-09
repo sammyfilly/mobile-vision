@@ -84,7 +84,7 @@ def setup_logger(
         else:
             filename = os.path.join(output, "log.txt")
         if distributed_rank > 0:
-            filename = filename + ".rank{}".format(distributed_rank)
+            filename = f"{filename}.rank{distributed_rank}"
         path_manager.mkdirs(os.path.dirname(filename))
 
         fh = logging.StreamHandler(_cached_log_stream(filename, path_manager))
@@ -110,11 +110,11 @@ class _ColorfulFormatter(logging.Formatter):
         log = super(_ColorfulFormatter, self).formatMessage(record)
         if record.levelno == logging.WARNING:
             prefix = colored("WARNING", "red", attrs=["blink"])
-        elif record.levelno == logging.ERROR or record.levelno == logging.CRITICAL:
+        elif record.levelno in [logging.ERROR, logging.CRITICAL]:
             prefix = colored("ERROR", "red", attrs=["blink", "underline"])
         else:
             return log
-        return prefix + " " + log
+        return f"{prefix} {log}"
 
 
 # cache the opened file object, so that different calls to `setup_logger`

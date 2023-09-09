@@ -40,11 +40,11 @@ class MultiIONetBackbone(nn.Module):
         if self.vertical_connect_stage0:
             outputs = []
             for path_idx in range(self.num_paths):
-                outputs.append(self.paths[f"path{path_idx}_s{0}"](inputs))
+                outputs.append(self.paths[f"path{path_idx}_s0"](inputs))
                 inputs = torch.clone(outputs[path_idx])
         else:
             outputs = [
-                self.paths[f"path{path_idx}_s{0}"](inputs)
+                self.paths[f"path{path_idx}_s0"](inputs)
                 for path_idx in range(self.num_paths)
             ]
 
@@ -57,26 +57,19 @@ class MultiIONetBackbone(nn.Module):
             ]
 
         # header
-        if self.header is not None:
-            output = self.header(outputs)
-            return output  # single tensor
-        else:
-            return outputs  # list of tensors
+        return self.header(outputs) if self.header is not None else outputs
 
 
 def get_arch_def(arch_name, arch_factory):
     assert arch_name in arch_factory
-    arch_def = arch_factory[arch_name]
-    return arch_def
+    return arch_factory[arch_name]
 
 
 def create_builder(arch_name):
     arch_def = get_arch_def(arch_name, modeldef.MODEL_ARCH)
 
     logger.info(
-        'Using arch_def for ARCH "{}" (without scaling):\n{}'.format(
-            arch_name, format_dict_expanding_list_values(arch_def)
-        )
+        f'Using arch_def for ARCH "{arch_name}" (without scaling):\n{format_dict_expanding_list_values(arch_def)}'
     )
 
     builder = mbuilder.FBNetBuilder()
@@ -104,7 +97,7 @@ def build_multi_io_net_backbone(arch_name, build_cls_header=True):
     vertical_connect_stage0 = "multitask_nas_v2" in arch_name
 
     # unify architecture defination
-    unify_names = [f"path{path_idx}_s{0}" for path_idx in range(num_paths)]
+    unify_names = [f"path{path_idx}_s0" for path_idx in range(num_paths)]
     for stage_idx in range(1, num_stages):
         unify_names.append(f"fusions_s{stage_idx}")
         for path_idx in range(num_paths):
@@ -131,7 +124,7 @@ def build_multi_io_net_backbone(arch_name, build_cls_header=True):
 
     in_channels = [3] * num_paths
     for path_idx in range(num_paths):
-        block_name = f"path{path_idx}_s{0}"
+        block_name = f"path{path_idx}_s0"
         dim_in = in_channels[path_idx]
         paths[block_name] = builder.build_blocks(
             unified_arch_def[block_name], dim_in=dim_in

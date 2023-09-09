@@ -130,7 +130,7 @@ def enable_dist_process_groups(
     dist_params: DistributedParams,
     timeout: timedelta = DEFAULT_TIMEOUT,
 ):
-    assert backend.lower() in ["nccl", "gloo"]
+    assert backend.lower() in {"nccl", "gloo"}
     try:
         pg = dist.init_process_group(
             backend=backend,
@@ -140,10 +140,10 @@ def enable_dist_process_groups(
             timeout=timeout,
         )
     except Exception as e:
-        logger.error("Process group URL: {}".format(init_method))
+        logger.error(f"Process group URL: {init_method}")
         raise e
 
-    if backend.lower() in ["nccl"]:
+    if backend.lower() in {"nccl"}:
         torch.cuda.set_device(dist_params.local_rank)
     # synchronize is needed here to prevent a possible timeout after calling
     # init_process_group
@@ -265,9 +265,7 @@ def launch(
     if backend == "NCCL":
         assert (
             num_processes_per_machine <= torch.cuda.device_count()
-        ), "num_processes_per_machine is greater than device count: {} vs {}".format(
-            num_processes_per_machine, torch.cuda.device_count()
-        )
+        ), f"num_processes_per_machine is greater than device count: {num_processes_per_machine} vs {torch.cuda.device_count()}"
 
     local_ranks = range(
         num_processes_per_machine * machine_rank,
@@ -492,11 +490,11 @@ def interleave_by_rank(concurrency_limit: int = 1):
     rank = comm.get_rank()
     total_size = comm.get_world_size()
 
-    if not concurrency_limit > 0:
+    if concurrency_limit <= 0:
         raise ValueError("`concurrency_limit` must be positive")
 
     for i in range(0, total_size, concurrency_limit):
-        if i <= rank and rank < i + concurrency_limit:
+        if i <= rank < i + concurrency_limit:
             logger.info(f"[interleave_by_rank] rank{rank}/{total_size} starts")
             yield
             logger.info(f"[interleave_by_rank] rank{rank}/{total_size} ends")

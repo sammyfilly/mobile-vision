@@ -67,11 +67,10 @@ def find_modules(
 ):
     if not isinstance(module_type, tuple):
         module_type = (module_type,)
-    for x in model.modules():
-        if not exact_match:
-            if isinstance(x, module_type):
-                return True
-        else:
-            if type(x) in module_type:
-                return True
-    return False
+    return any(
+        not exact_match
+        and isinstance(x, module_type)
+        or exact_match
+        and type(x) in module_type
+        for x in model.modules()
+    )

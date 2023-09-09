@@ -9,8 +9,7 @@ import torch
 
 
 def _reduce_dict(rank, adict):
-    ret = comm.reduce_dict(adict[rank])
-    return ret
+    return comm.reduce_dict(adict[rank])
 
 
 def _run_gather(rank, data):

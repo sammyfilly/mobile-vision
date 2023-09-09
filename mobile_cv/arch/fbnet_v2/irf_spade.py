@@ -14,10 +14,10 @@ IRF_SPADE_DEFAULT_ARGS = {"seg_return_type": "input"}
 def _get_tuple_left(args, op_type):
     ret = copy.deepcopy(args)
     assert "name" in args
-    op_name = op_type + "_name"
+    op_name = f"{op_type}_name"
     assert op_name not in args
     ret[op_name] = args["name"]
-    ret["name"] = op_type + "_tuple_left"
+    ret["name"] = f"{op_type}_tuple_left"
     return ret
 
 
@@ -57,7 +57,7 @@ def irf_spade(
         **hp.merge_unify_args(IRF_SPADE_DEFAULT_ARGS, spade_args),
     }
 
-    ret = irf_block.IRFBlock(
+    return irf_block.IRFBlock(
         in_channels,
         out_channels,
         expansion=expansion,
@@ -73,7 +73,6 @@ def irf_spade(
         pwl_bn_args=bn_args_normal,
         **kwargs,
     )
-    return ret
 
 
 def irf_spade_pwl(
@@ -112,7 +111,7 @@ def irf_spade_pwl(
         **hp.merge_unify_args(IRF_SPADE_DEFAULT_ARGS, spade_args),
     }
 
-    ret = irf_block.IRFBlock(
+    return irf_block.IRFBlock(
         in_channels,
         out_channels,
         expansion=expansion,
@@ -128,7 +127,6 @@ def irf_spade_pwl(
         pwl_bn_args=bn_args_pwl,
         **kwargs,
     )
-    return ret
 
 
 _PRIMITIVES = {

@@ -24,8 +24,7 @@ def _reload_state_dict(state_dict):
     b = io.BytesIO()
     torch.save(state_dict, b)
     b.seek(0)
-    loaded_dict = torch.load(b)
-    return loaded_dict
+    return torch.load(b)
 
 
 class UpdateableObserver(UpdatableMovingAverageMaxStatObserver):
@@ -128,12 +127,12 @@ class TestFixedMinMaxObserver(unittest.TestCase):
 class TestUpdatableMovingAverageMaxStatObserver(unittest.TestCase):
     def test_pertensor_noupdate(self):
         """Check moving average observer updates max stat but ignores min max"""
+        averaging_constant = 0.01
         for obs_type in [
             UpdateableObserver,
             UpdatableSymmetricMovingAverageMinMaxObserver,
             UpdateableReLUMovingAverageMinMaxObserver,
         ]:
-            averaging_constant = 0.01
             observer = obs_type(
                 dtype=torch.quint8,
                 qscheme=torch.per_tensor_affine,

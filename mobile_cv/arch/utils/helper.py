@@ -22,8 +22,7 @@ def get_divisible_by(num, divisible_by, min_val=None):
         ret = int((py2_round(num / divisible_by) or 1) * divisible_by)
         if ret < 0.95 * num:
             ret += divisible_by
-    if ret < min_val:
-        ret = min_val
+    ret = max(ret, min_val)
     return ret
 
 
@@ -41,7 +40,7 @@ def filter_kwargs(func, kwargs, log_skipped=True):
         inspect.Parameter.VAR_KEYWORD,
         inspect.Parameter.VAR_POSITIONAL,
     }
-    if len(param_types.intersection(var_types)) > 0:
+    if param_types.intersection(var_types):
         return kwargs
 
     filter_keys = [
@@ -56,16 +55,14 @@ def filter_kwargs(func, kwargs, log_skipped=True):
     ]
 
     if log_skipped:
-        skipped_args = [x for x in kwargs.keys() if x not in filter_keys]
-        if skipped_args:
+        if skipped_args := [x for x in kwargs.keys() if x not in filter_keys]:
             logger.warning(f"Arguments {skipped_args} skipped for op {func.__name__}")
 
-    filtered_dict = {
+    return {
         filter_key: kwargs[filter_key]
         for filter_key in filter_keys
         if filter_key in kwargs
     }
-    return filtered_dict
 
 
 def filtered_func(func, **additional_args):
@@ -74,7 +71,7 @@ def filtered_func(func, **additional_args):
     """
 
     def ret_func(**kwargs):
-        all_args = {**kwargs, **additional_args}
+        all_args = kwargs | additional_args
         filtered_args = filter_kwargs(func, all_args)
         return func(filtered_args)
 
@@ -97,8 +94,7 @@ def merge_unify_args(*args):
 
     # ChainMap merges the dicts from right to left, so swap the order here
     unified_args = [unify_args(x) for x in reversed(args)]
-    ret = dict(ChainMap(*unified_args))
-    return ret
+    return dict(ChainMap(*unified_args))
 
 
 def update_dict(dest, src, seq_func=None):
@@ -124,10 +120,7 @@ def update_dict(dest, src, seq_func=None):
             assert isinstance(cur_dest, list), cur_dest
             dest[key] = seq_func(key, val, cur_dest)
         else:
-            if callable(val) and key in dest:
-                dest[key] = val(key, dest[key])
-            else:
-                dest[key] = val
+            dest[key] = val(key, dest[key]) if callable(val) and key in dest else val
     return dest
 
 
@@ -174,8 +167,7 @@ def format_dict_expanding_list_values(dic):
     for k, v in dic.items():
         lines.append(k)
         if isinstance(v, list):
-            for elem in v:
-                lines.append("- {}".format(elem))
+            lines.extend(f"- {elem}" for elem in v)
         else:
-            lines.append("  {}".format(v))
+            lines.append(f"  {v}")
     return "\n".join(lines)

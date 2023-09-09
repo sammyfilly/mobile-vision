@@ -31,7 +31,7 @@ def check_for_decorator(func: Any):
         return False
 
     global fb_overwritable_funcs
-    module_and_name = func.__module__ + "." + func.__name__
+    module_and_name = f"{func.__module__}.{func.__name__}"
     return fb_overwritable_funcs and (module_and_name in fb_overwritable_funcs)
 
 
@@ -52,14 +52,14 @@ def fb_overwritable():
         global fb_overwritable_funcs
 
         module_name = func.__module__
-        fb_overwritable_funcs.add(module_name + "." + func.__name__)
+        fb_overwritable_funcs.add(f"{module_name}.{func.__name__}")
 
         # If this is a method that's from "_fb" module then we simply return method
         # as is, no replacement is necessary.
         if module_name.endswith("_fb") or is_oss():
             return func
 
-        fb_module = module_name + "_fb"  # xxx.py -> xxx_fb.py
+        fb_module = f"{module_name}_fb"
         fb_func = dynamic_import("{}.{}".format(fb_module, func.__name__))
 
         _enforce_decorator(fb_func)

@@ -166,7 +166,7 @@ def trace_and_save_torchscript(
     trace_type: str = "trace",
     lite_format: bool = True,
 ):
-    print("Tracing and saving TorchScript to {} ...".format(output_path))
+    print(f"Tracing and saving TorchScript to {output_path} ...")
     with torch.no_grad():
         if trace_type == "trace":
             script_model = torch.jit.trace(model, inputs)

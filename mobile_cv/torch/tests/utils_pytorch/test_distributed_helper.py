@@ -25,8 +25,7 @@ def _test_func(value):
         "a": torch.tensor([2.0 + value + rank]),
         "b": torch.tensor([3.0 + value + rank]),
     }
-    ret = comm.reduce_dict(data)
-    return ret
+    return comm.reduce_dict(data)
 
 
 def _do_workload_with_interleave(concurrency_limit: int, workload_sec: float) -> float:
